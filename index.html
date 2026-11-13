@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerRelay — Automated Multi-Role Job Watcher</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    tailwind.config = { darkMode: "class" };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    html.dark body {
+      background-color: #020617;
+      background-image:
+        radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.14) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.10) 0px, transparent 45%);
+    }
+    html:not(.dark) body {
+      background-color: #f8fafc;
+      background-image:
+        radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.06) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 45%);
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="text-slate-900 dark:text-slate-100 min-h-screen antialiased transition-colors duration-200">
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- 24/7 Cloud Setup Modal -->
+  <div id="cloudModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Run 24/7 with GitHub Actions (Free)</h3>
+        <button id="closeCloudModalBtn" type="button" class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-medium cursor-pointer">Close</button>
+      </div>
+      <p class="text-xs text-slate-600 dark:text-slate-400 mb-4">
+        Put <code class="text-indigo-600 dark:text-indigo-300">job_watcher.py</code>, your downloaded <code class="text-indigo-600 dark:text-indigo-300">config.json</code>, and your PDF CVs in a private GitHub repo, add <code class="text-indigo-600 dark:text-indigo-300">CAREERRELAY_APP_PASSWORD</code> in Repository Secrets, and add <code class="text-indigo-600 dark:text-indigo-300">.github/workflows/careerrelay.yml</code>:
+      </p>
+      <pre id="workflowYaml" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-[11px] text-emerald-300 overflow-x-auto leading-relaxed">name: CareerRelay Hourly Watcher
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run one check cycle
+        env:
+          CAREERRELAY_APP_PASSWORD: ${{ secrets.CAREERRELAY_APP_PASSWORD }}
+        run: python3 -c "import job_watcher; job_watcher.run_once(job_watcher.load_seen_ids())"</pre>
+      <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
+        <button id="copyRulesBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">Copy My Rules JSON</button>
+        <button id="downloadConfigBtn" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white cursor-pointer">Download config.json</button>
+        <button id="copyYamlBtn" type="button" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white cursor-pointer">Copy Workflow YAML</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-4 py-6 sm:py-10">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-2.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+          Step 11 — Complete Zero-Code Automation Suite
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">CareerRelay Auto-Apply</h1>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Configure rules, export <code class="text-xs text-indigo-500 dark:text-indigo-300">config.json</code>, track portal links, and export your history to CSV.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button id="themeToggleBtn" type="button" class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition cursor-pointer shadow-sm">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel">Light</span>
+        </button>
+        <button id="openCloudModalBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition cursor-pointer shadow-sm">
+          24/7 Cloud &amp; Config
+        </button>
+        <button id="checkJobsBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Check for New Jobs
+        </button>
+      </div>
+    </header>
+
+    <!-- Scheduler, Feed Source & Global Auto-Apply Bar -->
+    <section class="bg-white/90 dark:bg-slate-900/80 backdrop-blur border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-sm">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-3">
+            <button id="schedulerToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-emerald-500 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">
+              <span id="schedulerKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
+            </button>
+            <div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">Automatic Scheduler</div>
+              <div id="countdownText" class="text-xs text-slate-500 dark:text-slate-400">Next fetch in 59:59</div>
+            </div>
+          </div>
+
+          <div class="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+
+          <div class="flex items-center gap-2">
+            <label for="intervalSelect" class="text-xs font-medium text-slate-600 dark:text-slate-400">Frequency:</label>
+            <select id="intervalSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="3600" selected>Every 1 Hour (Production)</option>
+              <option value="5">Every 5 Seconds (Live Demo)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <label for="feedSourceSelect" class="text-xs font-medium text-slate-600 dark:text-slate-400">Source:</label>
+            <select id="feedSourceSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="simulated" selected>Simulated Recruiter Feed</option>
+              <option value="remotive">Live Public Feed (Remotive)</option>
+              <option value="arbeitnow">Live Public Feed (Arbeitnow)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between lg:justify-end gap-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2">
+          <span id="statusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
+            Auto-Apply ON
+          </span>
+          <button id="autoApplyToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span id="autoApplyKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
+          </button>
+        </div>
+      </div>
+      <div id="feedStatusMsg" class="hidden mt-3 text-xs rounded-xl px-3 py-2"></div>
+    </section>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+        <div id="statScanned" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">0</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Jobs Scanned</div>
+      </div>
+      <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+        <div id="statMatched" class="text-2xl sm:text-3xl font-bold text-indigo-600 dark:text-indigo-400">0</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Matches Found</div>
+      </div>
+      <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
+        <div id="statApplied" class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">0</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Applied</div>
+      </div>
+      <div class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 text-center shadow-sm">
+        <div id="statPortal" class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">0</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Portal Action Needed</div>
+      </div>
+    </div>
+
+    <!-- Multi-Role Rules & CV Library -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- CV Library -->
+      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-1">1. CV Library</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Saved automatically in your browser.</p>
+
+        <div id="cvList" class="space-y-2 mb-4"></div>
+
+        <form id="addCvForm" class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <label for="newCvName" class="block text-xs font-medium text-slate-600 dark:text-slate-400">Add a CV</label>
+          <div class="flex gap-2">
+            <input id="newCvName" type="text" placeholder="e.g. Legal_Ops_CV.pdf" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-900 dark:border-slate-700 text-white text-xs font-semibold cursor-pointer shrink-0">Add</button>
+          </div>
+          <input id="newCvSkills" type="text" placeholder="CV skills (e.g. DPDP, GDPR, DPIA)" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <div>
+            <label for="cvFilePicker" class="inline-flex items-center gap-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium cursor-pointer">
+              <span>Or pick a file from your device</span>
+              <input id="cvFilePicker" type="file" accept=".pdf,.doc,.docx" class="hidden" />
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <!-- Simultaneous Role + Region + CV Rules -->
+      <section class="lg:col-span-2 bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">2. Simultaneous Role &amp; Region Rules</h2>
+          <span id="activeRulesCount" class="text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-2.5 py-0.5 rounded-full">2 active</span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Includes 1-click pre-filtered search links for LinkedIn, Naukri, Indeed, Foundit, and Wellfound.</p>
+
+        <div id="rulesList" class="space-y-2.5 mb-4"></div>
+
+        <form id="addRuleForm" class="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <input id="ruleRoleInput" list="roleSuggestions" type="text" placeholder="Pick or type job role..." class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <datalist id="roleSuggestions">
+            <option value="Data Privacy Analyst"></option>
+            <option value="Data Protection Officer"></option>
+            <option value="Privacy Counsel"></option>
+            <option value="Corporate Counsel"></option>
+            <option value="Legal Compliance Specialist"></option>
+            <option value="Contract Manager"></option>
+            <option value="GRC Analyst"></option>
+            <option value="Cybersecurity Analyst"></option>
+            <option value="Software Engineer"></option>
+            <option value="Product Manager"></option>
+            <option value="Data Analyst"></option>
+            <option value="Business Analyst"></option>
+            <option value="Financial Analyst"></option>
+            <option value="HR Manager"></option>
+          </datalist>
+          <select id="ruleRegionInput" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="Pune">Pune</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Bengaluru">Bengaluru</option>
+            <option value="Hyderabad">Hyderabad</option>
+            <option value="Delhi NCR">Delhi NCR</option>
+            <option value="Gurugram">Gurugram</option>
+            <option value="Noida">Noida</option>
+            <option value="Chennai">Chennai</option>
+            <option value="Kolkata">Kolkata</option>
+            <option value="Ahmedabad">Ahmedabad</option>
+            <option value="Remote">Remote</option>
+            <option value="Any">Any Region</option>
+          </select>
+          <select id="ruleCvInput" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          <button type="submit" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">+ Add Rule</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Email Notification, Filters & Company Boards Settings -->
+    <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 mb-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">3. Email Alerts, Filters &amp; Zero-Code Config</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Everything here exports straight into <code class="text-indigo-500 dark:text-indigo-300">config.json</code> for <code class="text-indigo-500 dark:text-indigo-300">job_watcher.py</code>.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-col">
+            <input id="notifyEmailInput" type="email" placeholder="your.email@example.com" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 w-52 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <span id="emailValidityHint" class="text-[10px] mt-1 text-slate-400"></span>
+          </div>
+          <select id="emailModeSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="instant">Instant Alerts</option>
+            <option value="digest">Summary Digest</option>
+          </select>
+          <button id="emailNotifyToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span id="emailNotifyKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+        <div>
+          <label for="excludeKeywordsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Exclude Keywords (comma-separated)</label>
+          <input id="excludeKeywordsInput" type="text" placeholder="intern, internship, unpaid" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="flex flex-col justify-between gap-2">
+          <div>
+            <label for="companyBoardsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Greenhouse / Lever Company Slugs (comma-separated)</label>
+            <div class="flex gap-2">
+              <input id="companyBoardsInput" type="text" placeholder="e.g. stripe, figma, atlassian" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button id="quickDownloadConfigBtn" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shrink-0">Download config.json</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manual Portal Queue (Company Portal Required) -->
+    <section class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-5 mb-6 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">4. Manual Portal Queue (Direct Links)</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Companies that require applying on their own portal appear here with a direct link and your recommended CV.</p>
+        </div>
+        <button id="clearPortalBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer shrink-0">Clear queue</button>
+      </div>
+      <div id="portalQueueList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    </section>
+
+    <!-- Recruiter Job Feed, Applied Log & Email Outbox -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">5. Job Feed</h2>
+          <span id="feedBadge" class="text-xs text-slate-500 dark:text-slate-400">Simulated</span>
+        </div>
+        <div id="jobFeedList" class="space-y-3"></div>
+      </section>
+
+      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">6. Applied Jobs Log</h2>
+          <div class="flex items-center gap-2.5">
+            <button id="exportCsvBtn" type="button" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">Export CSV</button>
+            <button id="clearLogBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">Clear</button>
+          </div>
+        </div>
+        <input id="searchAppliedInput" type="text" placeholder="Filter by role, company, or CV..." class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <div id="appliedList" class="space-y-3"></div>
+      </section>
+
+      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">7. Email Alert Outbox</h2>
+          <button id="clearEmailBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">Clear</button>
+        </div>
+        <div id="emailOutboxList" class="space-y-3"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "careerrelay_state_v5";
+
+    const SAMPLE_JOBS = [
+      { title: "Data Privacy Analyst", skills: "DPDP, GDPR, DPIA", company: "FinSecure Systems", recruiter: "Ananya Verma (Recruiter)", region: "Pune", applyType: "auto", url: "https://example.com/jobs/finsecure-privacy" },
+      { title: "Corporate Counsel", skills: "Contracts, SaaS, Vendor Agreements", company: "Apex Logistics", recruiter: "Company Career Portal", region: "Pune", applyType: "portal", url: "https://boards.greenhouse.io/example/jobs/apex-counsel" },
+      { title: "Legal Compliance Specialist", skills: "Regulatory, Audit, Policy", company: "Meridian Bank", recruiter: "Priya Nair (HR)", region: "Mumbai", applyType: "portal", url: "https://example.com/careers/meridian-compliance" },
+      { title: "Data Privacy Analyst", skills: "GDPR, RoPA, Privacy Governance", company: "NovaPay Global", recruiter: "Company Career Portal", region: "Pune", applyType: "portal", url: "https://jobs.lever.co/example/novapay-privacy" },
+      { title: "Product Manager", skills: "Roadmap, Agile, Analytics", company: "BrightCart", recruiter: "Karan Gill (Recruiter)", region: "Remote", applyType: "auto", url: "https://example.com/jobs/brightcart-pm" },
+      { title: "Corporate Counsel", skills: "M&A, Corporate Law, Compliance", company: "CloudScale India", recruiter: "Meera Iyer (Talent)", region: "Bengaluru", applyType: "portal", url: "https://example.com/careers/cloudscale-counsel" },
+      { title: "Data Protection Officer", skills: "DPDP, GDPR, Risk Assessment", company: "Veritas FinTech", recruiter: "Ritu Sharma (HR)", region: "Hyderabad", applyType: "portal", url: "https://example.com/careers/veritas-dpo" },
+      { title: "GRC Analyst", skills: "ISO 27001, Compliance, Risk", company: "ShieldNet India", recruiter: "Arjun Nair (Talent)", region: "Gurugram", applyType: "auto", url: "https://example.com/jobs/shieldnet-grc" },
+      { title: "Software Engineer", skills: "Python, APIs, Cloud", company: "NextWave Labs", recruiter: "Devika Rao (Recruiter)", region: "Chennai", applyType: "portal", url: "https://example.com/careers/nextwave-swe" },
+      { title: "Data Privacy Analyst", skills: "DPDP, Consent, Data Mapping", company: "Vanguard Health", recruiter: "Neha Kulkarni (Recruiter)", region: "Remote", applyType: "auto", url: "https://example.com/jobs/vanguard-privacy" }
+    ];
+
+    const defaultState = {
+      theme: "dark",
+      autoApply: true,
+      schedulerOn: true,
+      intervalSec: 3600,
+      feedSource: "simulated",
+      notifyEmail: "",
+      emailMode: "instant",
+      emailAlertsOn: true,
+      excludeKeywords: "intern, internship, unpaid",
+      companyBoards: "",
+      scannedCount: 0,
+      matchedCount: 0,
+      cvs: [
+        { id: "cv-1", name: "Data_Privacy_DPDP_CV.pdf", skills: "DPDP, GDPR, DPIA, RoPA" },
+        { id: "cv-2", name: "Corporate_Counsel_CV.pdf", skills: "Contracts, Vendor Agreements, Compliance" },
+        { id: "cv-3", name: "Legal_Compliance_CV.pdf", skills: "Regulatory, Audit, Policy, Risk" }
+      ],
+      rules: [
+        { id: "rule-1", role: "Data Privacy Analyst", region: "Pune", cvId: "cv-1", active: true },
+        { id: "rule-2", role: "Corporate Counsel", region: "Pune", cvId: "cv-2", active: true }
+      ],
+      feed: [],
+      portalQueue: [],
+      applied: [],
+      emailOutbox: [],
+      nextJobIndex: 0
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { ...defaultState, secondsLeft: defaultState.intervalSec };
+        const parsed = JSON.parse(raw);
+        return {
+          ...defaultState,
+          ...parsed,
+          secondsLeft: parsed.intervalSec || defaultState.intervalSec
+        };
+      } catch (e) {
+        return { ...defaultState, secondsLeft: defaultState.intervalSec };
+      }
+    }
+
+    function saveState() {
+      try {
+        const toSave = { ...state };
+        delete toSave.secondsLeft;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+
+    const state = loadState();
+    let timerHandle = null;
+    let appliedSearchTerm = "";
+
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    const cloudModal = document.getElementById("cloudModal");
+    const openCloudModalBtn = document.getElementById("openCloudModalBtn");
+    const closeCloudModalBtn = document.getElementById("closeCloudModalBtn");
+    const copyYamlBtn = document.getElementById("copyYamlBtn");
+    const copyRulesBtn = document.getElementById("copyRulesBtn");
+    const downloadConfigBtn = document.getElementById("downloadConfigBtn");
+    const quickDownloadConfigBtn = document.getElementById("quickDownloadConfigBtn");
+    const workflowYaml = document.getElementById("workflowYaml");
+
+    const schedulerToggle = document.getElementById("schedulerToggle");
+    const schedulerKnob = document.getElementById("schedulerKnob");
+    const countdownText = document.getElementById("countdownText");
+    const intervalSelect = document.getElementById("intervalSelect");
+    const feedSourceSelect = document.getElementById("feedSourceSelect");
+    const feedStatusMsg = document.getElementById("feedStatusMsg");
+    const feedBadge = document.getElementById("feedBadge");
+    const autoApplyToggle = document.getElementById("autoApplyToggle");
+    const autoApplyKnob = document.getElementById("autoApplyKnob");
+    const statusBadge = document.getElementById("statusBadge");
+    const checkJobsBtn = document.getElementById("checkJobsBtn");
+    const clearPortalBtn = document.getElementById("clearPortalBtn");
+    const clearLogBtn = document.getElementById("clearLogBtn");
+    const exportCsvBtn = document.getElementById("exportCsvBtn");
+    const searchAppliedInput = document.getElementById("searchAppliedInput");
+    const clearEmailBtn = document.getElementById("clearEmailBtn");
+    const notifyEmailInput = document.getElementById("notifyEmailInput");
+    const emailValidityHint = document.getElementById("emailValidityHint");
+    function updateEmailHint() {
+      const val = (state.notifyEmail || "").trim();
+      if (!val) {
+        emailValidityHint.textContent = "Required for config.json";
+        emailValidityHint.className = "text-[10px] mt-1 text-slate-400";
+      } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        emailValidityHint.textContent = "✓ Valid format (sent via job_watcher.py)";
+        emailValidityHint.className = "text-[10px] mt-1 text-emerald-500";
+      } else {
+        emailValidityHint.textContent = "Enter a valid email address";
+        emailValidityHint.className = "text-[10px] mt-1 text-amber-500";
+      }
+    }
+    const emailModeSelect = document.getElementById("emailModeSelect");
+    const emailNotifyToggle = document.getElementById("emailNotifyToggle");
+    const emailNotifyKnob = document.getElementById("emailNotifyKnob");
+    const excludeKeywordsInput = document.getElementById("excludeKeywordsInput");
+    const companyBoardsInput = document.getElementById("companyBoardsInput");
+    const cvList = document.getElementById("cvList");
+    const addCvForm = document.getElementById("addCvForm");
+    const newCvName = document.getElementById("newCvName");
+    const newCvSkills = document.getElementById("newCvSkills");
+    const cvFilePicker = document.getElementById("cvFilePicker");
+    const rulesList = document.getElementById("rulesList");
+    const activeRulesCount = document.getElementById("activeRulesCount");
+    const addRuleForm = document.getElementById("addRuleForm");
+    const ruleRoleInput = document.getElementById("ruleRoleInput");
+    const ruleRegionInput = document.getElementById("ruleRegionInput");
+    const ruleCvInput = document.getElementById("ruleCvInput");
+    const portalQueueList = document.getElementById("portalQueueList");
+    const jobFeedList = document.getElementById("jobFeedList");
+    const appliedList = document.getElementById("appliedList");
+    const emailOutboxList = document.getElementById("emailOutboxList");
+    const toastContainer = document.getElementById("toastContainer");
+    const statScanned = document.getElementById("statScanned");
+    const statMatched = document.getElementById("statMatched");
+    const statApplied = document.getElementById("statApplied");
+    const statPortal = document.getElementById("statPortal");
+
+    function applyTheme() {
+      const isDark = state.theme !== "light";
+      document.documentElement.classList.toggle("dark", isDark);
+      themeIcon.textContent = isDark ? "☀️" : "🌙";
+      themeLabel.textContent = isDark ? "Light" : "Dark";
+    }
+
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildConfigJson() {
+      const boards = state.companyBoards
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const excludes = state.excludeKeywords
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      return JSON.stringify({
+        recipient_email: state.notifyEmail.trim() || "your.email@gmail.com",
+        sender_email: state.notifyEmail.trim() || "your.email@gmail.com",
+        email_mode: state.emailMode || "instant",
+        check_interval_seconds: state.intervalSec || 3600,
+        exclude_keywords: excludes,
+        greenhouse_boards: boards,
+        lever_companies: boards,
+        ashby_companies: boards,
+        rules: state.rules.filter((r) => r.active).map((r) => ({
+          role: r.role,
+          region: r.region,
+          cv_file: getCvName(r.cvId)
+        }))
+      }, null, 2);
+    }
+
+    function exportAppliedCsv() {
+      if (state.applied.length === 0) {
+        showToast("Nothing to export", "Apply to at least one job first.", false);
+        return;
+      }
+      const headers = ["Title", "Company", "Region", "CV Sent", "Method", "Time"];
+      const escapeCsv = (val) => `"${String(val || "").replace(/"/g, '""')}"`;
+      const rows = state.applied.map((a) =>
+        [a.title, a.company, a.region, a.cvName, a.method || "Auto", a.time].map(escapeCsv).join(",")
+      );
+      const csv = [headers.join(","), ...rows].join("\n");
+      downloadFile("careerrelay_applied_jobs.csv", csv, "text/csv;charset=utf-8");
+      showToast("CSV Exported", "Saved careerrelay_applied_jobs.csv.", true);
+    }
+
+    function copyText(text, label) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast("Copied", `${label} copied to clipboard.`, true);
+        }).catch(() => fallbackCopy(text, label));
+      } else {
+        fallbackCopy(text, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        showToast("Copied", `${label} copied to clipboard.`, true);
+      } catch (e) {
+        showToast("Copy unavailable", "Select and copy the text manually.", false);
+      }
+      ta.remove();
+    }
+
+    function showToast(title, message, isSuccess) {
+      const toast = document.createElement("div");
+      toast.className = "pointer-events-auto animate-slide-in rounded-2xl border p-4 shadow-2xl bg-white dark:bg-slate-900 " +
+        (isSuccess ? "border-emerald-300 dark:border-emerald-500/50" : "border-amber-300 dark:border-amber-500/50");
+      toast.innerHTML = `
+        <div class="flex items-start gap-3">
+          <span class="mt-1 w-2.5 h-2.5 rounded-full shrink-0 ${isSuccess ? "bg-emerald-500 dark:bg-emerald-400" : "bg-amber-500 dark:bg-amber-400"}"></span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-bold text-slate-900 dark:text-white">${title}</p>
+              <button type="button" data-toast-close class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-bold leading-none cursor-pointer px-1" aria-label="Close notification">✕</button>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">${message}</p>
+            <div class="mt-2.5 flex items-center gap-2">
+              <button type="button" data-toast-recheck class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold cursor-pointer">Recheck</button>
+              <button type="button" data-toast-close class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-semibold cursor-pointer">Close</button>
+            </div>
+          </div>
+        </div>
+      `;
+      toast.addEventListener("click", (e) => {
+        if (e.target.closest("[data-toast-close]")) {
+          toast.remove();
+          return;
+        }
+        if (e.target.closest("[data-toast-recheck]")) {
+          toast.remove();
+          state.secondsLeft = state.intervalSec;
+          checkForNewJobs();
+          updateCountdownUI();
+        }
+      });
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 8000);
+    }
+
+    function setFeedStatus(text, isError) {
+      if (!text) {
+        feedStatusMsg.classList.add("hidden");
+        return;
+      }
+      feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 " +
+        (isError
+          ? "bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20"
+          : "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20");
+      feedStatusMsg.textContent = text;
+    }
+
+    function formatTime(totalSec) {
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function updateCountdownUI() {
+      if (!state.schedulerOn) {
+        countdownText.textContent = "Scheduler paused";
+      } else {
+        countdownText.textContent = "Next fetch in " + formatTime(state.secondsLeft);
+      }
+    }
+
+    function startScheduler() {
+      if (timerHandle) clearInterval(timerHandle);
+      if (!state.schedulerOn) {
+        updateCountdownUI();
+        return;
+      }
+      timerHandle = setInterval(() => {
+        if (!state.schedulerOn) return;
+        state.secondsLeft -= 1;
+        if (state.secondsLeft <= 0) {
+          state.secondsLeft = state.intervalSec;
+          checkForNewJobs();
+        }
+        updateCountdownUI();
+      }, 1000);
+      updateCountdownUI();
+    }
+
+    function updateToggleUI() {
+      intervalSelect.value = String(state.intervalSec);
+      feedSourceSelect.value = state.feedSource;
+      if (state.feedSource === "remotive") {
+        feedBadge.textContent = "Live (Remotive)";
+      } else if (state.feedSource === "arbeitnow") {
+        feedBadge.textContent = "Live (Arbeitnow)";
+      } else {
+        feedBadge.textContent = "Simulated";
+      }
+      notifyEmailInput.value = state.notifyEmail || "";
+      emailModeSelect.value = state.emailMode || "instant";
+      excludeKeywordsInput.value = state.excludeKeywords || "";
+      companyBoardsInput.value = state.companyBoards || "";
+
+      autoApplyToggle.setAttribute("aria-checked", String(state.autoApply));
+      if (state.autoApply) {
+        autoApplyToggle.classList.remove("bg-slate-300", "dark:bg-slate-700");
+        autoApplyToggle.classList.add("bg-indigo-600");
+        autoApplyKnob.classList.add("translate-x-5");
+        autoApplyKnob.classList.remove("translate-x-0");
+        statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20";
+        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>Auto-Apply ON';
+      } else {
+        autoApplyToggle.classList.remove("bg-indigo-600");
+        autoApplyToggle.classList.add("bg-slate-300", "dark:bg-slate-700");
+        autoApplyKnob.classList.remove("translate-x-5");
+        autoApplyKnob.classList.add("translate-x-0");
+        statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20";
+        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400"></span>Notify Only';
+      }
+
+      schedulerToggle.setAttribute("aria-checked", String(state.schedulerOn));
+      if (state.schedulerOn) {
+        schedulerToggle.classList.remove("bg-slate-300", "dark:bg-slate-700");
+        schedulerToggle.classList.add("bg-emerald-500");
+        schedulerKnob.classList.add("translate-x-5");
+        schedulerKnob.classList.remove("translate-x-0");
+      } else {
+        schedulerToggle.classList.remove("bg-emerald-500");
+        schedulerToggle.classList.add("bg-slate-300", "dark:bg-slate-700");
+        schedulerKnob.classList.remove("translate-x-5");
+        schedulerKnob.classList.add("translate-x-0");
+      }
+
+      emailNotifyToggle.setAttribute("aria-checked", String(state.emailAlertsOn));
+      if (state.emailAlertsOn) {
+        emailNotifyToggle.classList.remove("bg-slate-300", "dark:bg-slate-700");
+        emailNotifyToggle.classList.add("bg-indigo-600");
+        emailNotifyKnob.classList.add("translate-x-5");
+        emailNotifyKnob.classList.remove("translate-x-0");
+      } else {
+        emailNotifyToggle.classList.remove("bg-indigo-600");
+        emailNotifyToggle.classList.add("bg-slate-300", "dark:bg-slate-700");
+        emailNotifyKnob.classList.remove("translate-x-5");
+        emailNotifyKnob.classList.add("translate-x-0");
+      }
+    }
+
+    function getCvName(cvId) {
+      const found = state.cvs.find((c) => c.id === cvId);
+      return found ? found.name : "Default_CV.pdf";
+    }
+
+    function buildPlatformLinks(role, region) {
+      const qRole = encodeURIComponent(role);
+      const qLoc = encodeURIComponent(region === "Any" ? "" : region);
+      const roleSlug = role.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const regionSlug = region.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const linkedinUrl = `https://www.linkedin.com/jobs/search/?keywords=${qRole}${qLoc ? "&location=" + qLoc : ""}`;
+      const naukriUrl = region === "Any"
+        ? `https://www.naukri.com/${roleSlug}-jobs`
+        : `https://www.naukri.com/${roleSlug}-jobs-in-${regionSlug}`;
+      const indeedUrl = `https://in.indeed.com/jobs?q=${qRole}${qLoc ? "&l=" + qLoc : ""}`;
+      const founditUrl = `https://www.foundit.in/srp/results?query=${qRole}${qLoc ? "&locations=" + qLoc : ""}`;
+      const wellfoundUrl = `https://wellfound.com/jobs?query=${qRole}`;
+      return { linkedinUrl, naukriUrl, indeedUrl, founditUrl, wellfoundUrl };
+    }
+
+    function renderCvsAndDropdown() {
+      cvList.innerHTML = state.cvs.map((cv) => `
+        <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 px-3 py-2">
+          <div class="min-w-0">
+            <div class="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">${cv.name}</div>
+            ${cv.skills ? `<div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">${cv.skills}</div>` : ""}
+          </div>
+          ${state.cvs.length > 1
+            ? `<button type="button" data-del-cv="${cv.id}" class="text-[11px] text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0">Remove</button>`
+            : ""}
+        </div>
+      `).join("");
+
+      ruleCvInput.innerHTML = state.cvs.map((cv) => `<option value="${cv.id}">${cv.name}</option>`).join("");
+    }
+
+    function renderRules() {
+      const activeCount = state.rules.filter((r) => r.active).length;
+      activeRulesCount.textContent = `${activeCount} active`;
+
+      if (state.rules.length === 0) {
+        rulesList.innerHTML = `
+          <div class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-3.5 text-center border border-dashed border-slate-200 dark:border-slate-800">
+            No role rules yet. Add a role, region, and CV below.
+          </div>
+        `;
+        return;
+      }
+
+      rulesList.innerHTML = state.rules.map((rule) => {
+        const links = buildPlatformLinks(rule.role, rule.region);
+        return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border ${rule.active ? "border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-500/5" : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 opacity-60"} px-3.5 py-2.5">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-slate-900 dark:text-white">${rule.role}</div>
+            <div class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Region: <strong class="text-slate-800 dark:text-slate-200">${rule.region}</strong> · CV: <span class="text-indigo-700 dark:text-indigo-300 font-medium">${getCvName(rule.cvId)}</span></div>
+            <div class="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
+              <span class="text-slate-400 dark:text-slate-500">Quick search:</span>
+              <a href="${links.linkedinUrl}" target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 hover:underline font-medium">LinkedIn ↗</a>
+              <a href="${links.naukriUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Naukri ↗</a>
+              <a href="${links.indeedUrl}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">Indeed ↗</a>
+              <a href="${links.founditUrl}" target="_blank" rel="noopener noreferrer" class="text-violet-600 dark:text-violet-400 hover:underline font-medium">Foundit ↗</a>
+              <a href="${links.wellfoundUrl}" target="_blank" rel="noopener noreferrer" class="text-amber-600 dark:text-amber-400 hover:underline font-medium">Wellfound ↗</a>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" data-toggle-rule="${rule.id}" class="px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer ${rule.active ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20" : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}">
+              ${rule.active ? "Active" : "Paused"}
+            </button>
+            <button type="button" data-del-rule="${rule.id}" class="text-xs text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer">Delete</button>
+          </div>
+        </div>
+      `;
+      }).join("");
+    }
+
+    function render() {
+      renderCvsAndDropdown();
+      renderRules();
+
+      statScanned.textContent = state.scannedCount;
+      statMatched.textContent = state.matchedCount;
+      statApplied.textContent = state.applied.length;
+      statPortal.textContent = state.portalQueue.length;
+
+      if (state.portalQueue.length === 0) {
+        portalQueueList.innerHTML = `
+          <div class="md:col-span-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
+            No portal-only jobs waiting. When a company requires manual portal submission, its direct link will appear here.
+          </div>
+        `;
+      } else {
+        portalQueueList.innerHTML = state.portalQueue.map((item) => `
+          <div class="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/5 p-4 flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="text-sm font-semibold text-slate-900 dark:text-white">${item.title}</div>
+                  <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${item.company} · ${item.region}</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 shrink-0">Portal Only</span>
+              </div>
+              <div class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium mt-2">Recommended CV: ${item.cvName}</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition">
+                Open Company Portal ↗
+              </a>
+              <button type="button" data-mark-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer">
+                Mark as Applied
+              </button>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      if (state.feed.length === 0) {
+        jobFeedList.innerHTML = `
+          <div class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
+            Waiting for next fetch, or click <strong class="text-slate-700 dark:text-slate-200">Check for New Jobs</strong> above.
+          </div>
+        `;
+      } else {
+        jobFeedList.innerHTML = state.feed.map((job) => {
+          let badge = '<span class="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Skipped</span>';
+          if (job.matched && job.applyType === "portal") {
+            badge = '<span class="px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20">Portal Required</span>';
+          } else if (job.matched) {
+            badge = '<span class="px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20">Auto Match</span>';
+          }
+
+          const manualBtn = job.matched && !job.applied && job.applyType !== "portal"
+            ? `<button type="button" data-apply-id="${job.id}" class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer">Apply manually (${job.cvName}) →</button>`
+            : "";
+          const linkHtml = job.url
+            ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline mt-1 inline-block">Direct link ↗</a>`
+            : "";
+          return `
+            <div class="rounded-xl border ${job.matched ? (job.applyType === "portal" ? "border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/5" : "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-500/5") : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60"} p-3.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-slate-900 dark:text-white">${job.title}</div>
+                  <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${job.company} · ${job.region}</div>
+                  <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">${job.recruiter}${job.matched && job.matchScore ? ` · <span class=\"text-emerald-600 dark:text-emerald-400 font-semibold\">${job.matchScore}% Match</span>` : ""}</div>
+                  ${linkHtml}
+                </div>
+                ${badge}
+              </div>
+              ${manualBtn}
+            </div>
+          `;
+        }).join("");
+      }
+
+      const filteredApplied = state.applied.filter((app) => {
+        if (!appliedSearchTerm) return true;
+        const q = appliedSearchTerm.toLowerCase();
+        return app.title.toLowerCase().includes(q) ||
+          app.company.toLowerCase().includes(q) ||
+          app.cvName.toLowerCase().includes(q);
+      });
+
+      if (filteredApplied.length === 0) {
+        appliedList.innerHTML = `
+          <div class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
+            ${state.applied.length === 0 ? "No applications sent yet. Matching jobs will appear here." : "No matching applied jobs for that filter."}
+          </div>
+        `;
+      } else {
+        appliedList.innerHTML = filteredApplied.map((app) => `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 p-3.5 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">${app.title}</div>
+              <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${app.company} · ${app.region}</div>
+              <div class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium mt-1">CV Sent: ${app.cvName}</div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20">${app.method || "Auto"}</span>
+              <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">${app.time}</div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      if (state.emailOutbox.length === 0) {
+        emailOutboxList.innerHTML = `
+          <div class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
+            Email alerts for auto-applied and portal-only jobs will appear here.
+          </div>
+        `;
+      } else {
+        emailOutboxList.innerHTML = state.emailOutbox.map((mail) => `
+          <div class="rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/40 dark:bg-indigo-500/5 p-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">To: ${mail.to}</span>
+              <span class="text-[11px] text-slate-400 dark:text-slate-500">${mail.time}</span>
+            </div>
+            <div class="text-xs font-semibold text-slate-900 dark:text-white mt-1">${mail.subject}</div>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">${mail.body}</div>
+          </div>
+        `).join("");
+      }
+    }
+
+    function queueEmailAlert(job, isPortal) {
+      if (!state.emailAlertsOn) return;
+      const recipient = state.notifyEmail.trim() || "your.email@example.com";
+      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const modeTag = state.emailMode === "digest" ? "[Digest] " : "";
+      state.emailOutbox.unshift({
+        to: recipient,
+        subject: isPortal
+          ? `${modeTag}Portal Action Needed: ${job.title} at ${job.company}`
+          : `${modeTag}Applied: ${job.title} at ${job.company}`,
+        body: isPortal
+          ? `Manual portal required · Use CV: ${job.cvName} · Link: ${job.url}`
+          : `Region: ${job.region} · CV attached: ${job.cvName}`,
+        time: now
+      });
+      if (state.emailOutbox.length > 10) state.emailOutbox.pop();
+    }
+
+    function applyToJob(job, isAuto, methodLabel) {
+      if (job.applied) return;
+      job.applied = true;
+      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      state.applied.unshift({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        region: job.region,
+        cvName: job.cvName,
+        method: methodLabel || (isAuto ? "Auto" : "Manual"),
+        time: now
+      });
+      if (methodLabel !== "Portal") {
+        queueEmailAlert(job, false);
+      }
+      saveState();
+      showToast(isAuto ? "Auto-Applied + Email Queued" : "Marked as Applied", `${job.title} at ${job.company} (${job.cvName})`, true);
+    }
+
+    function queuePortalJob(job) {
+      state.portalQueue.unshift({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        region: job.region,
+        cvName: job.cvName,
+        url: job.url
+      });
+      queueEmailAlert(job, true);
+      saveState();
+      showToast("Company Portal Required", `Direct link ready for ${job.title} at ${job.company}.`, false);
+    }
+
+    function findMatchingRule(job) {
+      const titleLower = job.title.toLowerCase();
+      const excludes = state.excludeKeywords
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+      if (excludes.some((word) => titleLower.includes(word))) {
+        return null;
+      }
+
+      return state.rules.find((rule) => {
+        if (!rule.active) return false;
+        const roleMatch = titleLower.includes(rule.role.trim().toLowerCase());
+        const regionMatch = rule.region === "Any" ||
+          job.region.toLowerCase().includes(rule.region.toLowerCase()) ||
+          (rule.region === "Remote" && job.region.toLowerCase().includes("worldwide"));
+        return roleMatch && regionMatch;
+      });
+    }
+
+    function computeMatchScore(job, cvId) {
+      const cv = state.cvs.find((c) => c.id === cvId);
+      const cvSkills = (cv && cv.skills ? cv.skills : "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+      const jobText = `${job.title} ${job.skills || ""}`.toLowerCase();
+      if (cvSkills.length === 0) return 85;
+      const hits = cvSkills.filter((sk) => jobText.includes(sk)).length;
+      return Math.min(98, 70 + Math.round((hits / cvSkills.length) * 28));
+    }
+
+    function processIncomingBatch(batch) {
+      batch.forEach((template) => {
+        state.scannedCount += 1;
+        const matchedRule = findMatchingRule(template);
+        const cvName = matchedRule ? getCvName(matchedRule.cvId) : "";
+        const matchScore = matchedRule ? computeMatchScore(template, matchedRule.cvId) : 0;
+        const job = {
+          id: "job-" + Date.now() + "-" + state.scannedCount,
+          title: template.title,
+          skills: template.skills || "",
+          company: template.company,
+          recruiter: template.recruiter,
+          region: template.region,
+          applyType: template.applyType || "auto",
+          url: template.url || "",
+          matched: Boolean(matchedRule),
+          matchScore: matchScore,
+          cvName: cvName,
+          applied: false
+        };
+
+        state.feed.unshift(job);
+        if (state.feed.length > 8) state.feed.pop();
+
+        if (matchedRule) {
+          state.matchedCount += 1;
+          if (job.applyType === "portal") {
+            queuePortalJob(job);
+          } else if (state.autoApply) {
+            applyToJob(job, true, "Auto");
+          } else {
+            showToast("New Job Match!", `${job.title} at ${job.company} (${job.region})`, false);
+          }
+        }
+      });
+      saveState();
+      render();
+    }
+
+    async function checkForNewJobs() {
+      if (state.feedSource === "remotive") {
+        setFeedStatus("Fetching live jobs from Remotive public API...", false);
+        try {
+          const res = await fetch("https://remotive.com/api/remote-jobs?limit=6");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          const liveJobs = (data.jobs || []).slice(0, 3).map((j) => ({
+            title: j.title,
+            company: j.company_name,
+            recruiter: "Live Remotive Listing",
+            region: j.candidate_required_location || "Remote",
+            applyType: "portal",
+            url: j.url || ""
+          }));
+          if (liveJobs.length === 0) throw new Error("No jobs returned");
+          setFeedStatus(`Fetched ${liveJobs.length} live jobs from Remotive.`, false);
+          processIncomingBatch(liveJobs);
+          return;
+        } catch (err) {
+          setFeedStatus("Remotive feed unavailable right now — fell back to simulated recruiter feed.", true);
+        }
+      } else if (state.feedSource === "arbeitnow") {
+        setFeedStatus("Fetching live jobs from Arbeitnow public API...", false);
+        try {
+          const res = await fetch("https://www.arbeitnow.com/api/job-board-api");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          const liveJobs = (data.data || []).slice(0, 3).map((j) => ({
+            title: j.title,
+            company: j.company_name,
+            recruiter: "Live Arbeitnow Listing",
+            region: j.remote ? "Remote" : (j.location || "Europe"),
+            applyType: "portal",
+            url: j.url || ""
+          }));
+          if (liveJobs.length === 0) throw new Error("No jobs returned");
+          setFeedStatus(`Fetched ${liveJobs.length} live jobs from Arbeitnow.`, false);
+          processIncomingBatch(liveJobs);
+          return;
+        } catch (err) {
+          setFeedStatus("Arbeitnow feed unavailable right now — fell back to simulated recruiter feed.", true);
+        }
+      } else {
+        setFeedStatus("", false);
+      }
+
+      const batch = [];
+      for (let i = 0; i < 2; i++) {
+        batch.push(SAMPLE_JOBS[state.nextJobIndex % SAMPLE_JOBS.length]);
+        state.nextJobIndex += 1;
+      }
+      processIncomingBatch(batch);
+    }
+
+    themeToggleBtn.addEventListener("click", () => {
+      state.theme = state.theme === "light" ? "dark" : "light";
+      saveState();
+      applyTheme();
+    });
+
+    openCloudModalBtn.addEventListener("click", () => {
+      cloudModal.classList.remove("hidden");
+    });
+
+    closeCloudModalBtn.addEventListener("click", () => {
+      cloudModal.classList.add("hidden");
+    });
+
+    cloudModal.addEventListener("click", (e) => {
+      if (e.target === cloudModal) cloudModal.classList.add("hidden");
+    });
+
+    copyYamlBtn.addEventListener("click", () => {
+      copyText(workflowYaml.textContent, "GitHub Actions YAML");
+    });
+
+    copyRulesBtn.addEventListener("click", () => {
+      copyText(buildConfigJson(), "Config JSON");
+    });
+
+    downloadConfigBtn.addEventListener("click", () => {
+      downloadFile("config.json", buildConfigJson(), "application/json");
+      showToast("Downloaded config.json", "Upload this alongside job_watcher.py.", true);
+    });
+
+    quickDownloadConfigBtn.addEventListener("click", () => {
+      downloadFile("config.json", buildConfigJson(), "application/json");
+      showToast("Downloaded config.json", "Upload this alongside job_watcher.py.", true);
+    });
+
+    exportCsvBtn.addEventListener("click", exportAppliedCsv);
+
+    searchAppliedInput.addEventListener("input", (e) => {
+      appliedSearchTerm = e.target.value;
+      render();
+    });
+
+    autoApplyToggle.addEventListener("click", () => {
+      state.autoApply = !state.autoApply;
+      saveState();
+      updateToggleUI();
+    });
+
+    schedulerToggle.addEventListener("click", () => {
+      state.schedulerOn = !state.schedulerOn;
+      saveState();
+      updateToggleUI();
+      startScheduler();
+    });
+
+    emailNotifyToggle.addEventListener("click", () => {
+      state.emailAlertsOn = !state.emailAlertsOn;
+      saveState();
+      updateToggleUI();
+    });
+
+    notifyEmailInput.addEventListener("input", (e) => {
+      state.notifyEmail = e.target.value;
+      saveState();
+      updateEmailHint();
+    });
+
+    emailModeSelect.addEventListener("change", (e) => {
+      state.emailMode = e.target.value;
+      saveState();
+    });
+
+    excludeKeywordsInput.addEventListener("input", (e) => {
+      state.excludeKeywords = e.target.value;
+      saveState();
+    });
+
+    companyBoardsInput.addEventListener("input", (e) => {
+      state.companyBoards = e.target.value;
+      saveState();
+    });
+
+    intervalSelect.addEventListener("change", (e) => {
+      state.intervalSec = Number(e.target.value);
+      state.secondsLeft = state.intervalSec;
+      saveState();
+      startScheduler();
+    });
+
+    feedSourceSelect.addEventListener("change", (e) => {
+      state.feedSource = e.target.value;
+      saveState();
+      updateToggleUI();
+    });
+
+    checkJobsBtn.addEventListener("click", () => {
+      state.secondsLeft = state.intervalSec;
+      checkForNewJobs();
+      updateCountdownUI();
+    });
+
+    clearPortalBtn.addEventListener("click", () => {
+      state.portalQueue = [];
+      saveState();
+      render();
+    });
+
+    clearLogBtn.addEventListener("click", () => {
+      state.applied = [];
+      saveState();
+      render();
+    });
+
+    clearEmailBtn.addEventListener("click", () => {
+      state.emailOutbox = [];
+      saveState();
+      render();
+    });
+
+    addCvForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = newCvName.value.trim();
+      if (!name) return;
+      const skills = newCvSkills.value.trim();
+      state.cvs.push({ id: "cv-" + Date.now(), name, skills });
+      newCvName.value = "";
+      newCvSkills.value = "";
+      saveState();
+      render();
+    });
+
+    cvFilePicker.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      state.cvs.push({ id: "cv-" + Date.now(), name: file.name });
+      cvFilePicker.value = "";
+      saveState();
+      render();
+    });
+
+    cvList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-del-cv]");
+      if (!btn || state.cvs.length <= 1) return;
+      const id = btn.getAttribute("data-del-cv");
+      state.cvs = state.cvs.filter((c) => c.id !== id);
+      const fallbackId = state.cvs[0].id;
+      state.rules.forEach((r) => {
+        if (r.cvId === id) r.cvId = fallbackId;
+      });
+      saveState();
+      render();
+    });
+
+    addRuleForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const role = ruleRoleInput.value.trim();
+      if (!role) return;
+      state.rules.push({
+        id: "rule-" + Date.now(),
+        role,
+        region: ruleRegionInput.value,
+        cvId: ruleCvInput.value,
+        active: true
+      });
+      ruleRoleInput.value = "";
+      saveState();
+      render();
+    });
+
+    rulesList.addEventListener("click", (e) => {
+      const toggleBtn = e.target.closest("[data-toggle-rule]");
+      if (toggleBtn) {
+        const id = toggleBtn.getAttribute("data-toggle-rule");
+        const rule = state.rules.find((r) => r.id === id);
+        if (rule) rule.active = !rule.active;
+        saveState();
+        render();
+        return;
+      }
+      const delBtn = e.target.closest("[data-del-rule]");
+      if (delBtn) {
+        const id = delBtn.getAttribute("data-del-rule");
+        state.rules = state.rules.filter((r) => r.id !== id);
+        saveState();
+        render();
+      }
+    });
+
+    portalQueueList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-mark-portal]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-mark-portal");
+      const item = state.portalQueue.find((p) => p.id === id);
+      if (item) {
+        state.portalQueue = state.portalQueue.filter((p) => p.id !== id);
+        applyToJob({ ...item, applied: false }, false, "Portal");
+        render();
+      }
+    });
+
+    jobFeedList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-apply-id]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-apply-id");
+      const job = state.feed.find((j) => j.id === id);
+      if (job) {
+        applyToJob(job, false, "Manual");
+        render();
+      }
+    });
+
+    applyTheme();
+    updateToggleUI();
+    updateEmailHint();
+    render();
+    startScheduler();
+  </script>
+</body>
+</html>
