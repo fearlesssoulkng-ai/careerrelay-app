@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CareerRelay — Automated Multi-Role Job Watcher</title>
+  <title>CareerRelay — Smart Job Matching &amp; Alerts</title>
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script>
-    tailwind.config = { darkMode: "class" };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>tailwind.config = { darkMode: "class" };</script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     html.dark body {
       background-color: #020617;
       background-image:
@@ -27,535 +27,694 @@
         radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.06) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 45%);
     }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-slide-in {
-      animation: slideIn 0.25s ease-out forwards;
-    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-slide-in { animation: slideIn 0.22s ease-out forwards; }
   </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 min-h-screen antialiased transition-colors duration-200">
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
-  <!-- 24/7 Cloud Setup Modal -->
-  <div id="cloudModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Run 24/7 with GitHub Actions (Free)</h3>
-        <button id="closeCloudModalBtn" type="button" class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-medium cursor-pointer">Close</button>
+  <!-- Left Slide-Out User Profile Drawer -->
+  <div id="profileDrawer" class="hidden fixed inset-0 z-50 flex justify-start bg-slate-950/60 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full max-w-xs h-full p-5 flex flex-col justify-between shadow-2xl overflow-y-auto">
+      <div>
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+          <span class="text-sm font-bold text-slate-900 dark:text-white">My Profile</span>
+          <button id="closeProfileDrawerBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer">Close</button>
+        </div>
+        <div class="flex flex-col items-center text-center py-5 border-b border-slate-200 dark:border-slate-800">
+          <img id="profileAvatarImg" src="" alt="Profile" class="hidden w-20 h-20 rounded-full object-cover border-2 border-indigo-500 shadow-md" />
+          <div id="profileAvatarFallback" class="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">U</div>
+          <input id="profilePhotoInput" type="file" accept="image/*" class="hidden" />
+          <button id="changePhotoBtn" type="button" class="mt-2 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Upload Photo</button>
+          <div id="profileDrawerUsername" class="text-base font-bold text-slate-900 dark:text-white mt-2">@user</div>
+          <div id="profileDrawerStats" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">0 CVs · 0 Active Roles</div>
+        </div>
+        <form id="profileForm" class="space-y-3 pt-4">
+          <div>
+            <label for="profileFullName" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Full Name</label>
+            <input id="profileFullName" type="text" placeholder="Your full name" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label for="profileHeadline" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Current Role / Headline</label>
+            <input id="profileHeadline" type="text" placeholder="e.g. Software Engineer, Analyst, Counsel" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label for="profilePhone" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Phone / City</label>
+            <input id="profilePhone" type="text" placeholder="e.g. +91 98765 43210 · Pune" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label for="profileLinkedIn" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">LinkedIn URL</label>
+            <input id="profileLinkedIn" type="url" placeholder="https://linkedin.com/in/yourname" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label for="profilePortfolio" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Portfolio / Website URL</label>
+            <input id="profilePortfolio" type="url" placeholder="https://yourportfolio.com" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="profileCoverTemplate" class="text-xs font-medium text-slate-600 dark:text-slate-400">Cover Letter Template</label>
+              <button id="resetCoverTemplateBtn" type="button" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Reset Default</button>
+            </div>
+            <textarea id="profileCoverTemplate" rows="5" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-[11px] leading-relaxed text-slate-900 dark:text-white"></textarea>
+            <p class="text-[10px] text-slate-400 mt-1">Tags: {{company}}, {{role}}, {{region}}, {{skills}}, {{name}}, {{email}}</p>
+          </div>
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer shadow-sm">Save Profile</button>
+        </form>
       </div>
-      <p class="text-xs text-slate-600 dark:text-slate-400 mb-4">
-        Put <code class="text-indigo-600 dark:text-indigo-300">job_watcher.py</code>, your downloaded <code class="text-indigo-600 dark:text-indigo-300">config.json</code>, and your PDF CVs in a private GitHub repo, add <code class="text-indigo-600 dark:text-indigo-300">CAREERRELAY_APP_PASSWORD</code> in Repository Secrets, and add <code class="text-indigo-600 dark:text-indigo-300">.github/workflows/careerrelay.yml</code>:
-      </p>
-      <pre id="workflowYaml" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-[11px] text-emerald-300 overflow-x-auto leading-relaxed">name: CareerRelay Hourly Watcher
-on:
-  schedule:
-    - cron: "0 * * * *"
-  workflow_dispatch:
-jobs:
-  watch:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Run one check cycle
-        env:
-          CAREERRELAY_APP_PASSWORD: ${{ secrets.CAREERRELAY_APP_PASSWORD }}
-        run: python3 -c "import job_watcher; job_watcher.run_once(job_watcher.load_seen_ids())"</pre>
-      <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
-        <button id="copyRulesBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">Copy My Rules JSON</button>
-        <button id="downloadConfigBtn" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white cursor-pointer">Download config.json</button>
-        <button id="copyYamlBtn" type="button" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white cursor-pointer">Copy Workflow YAML</button>
+      <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button id="drawerLogoutBtn" type="button" class="w-full py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold cursor-pointer">Log Out</button>
       </div>
     </div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4 py-6 sm:py-10">
-    <!-- Header -->
-    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-      <div>
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-2.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
-          Step 11 — Complete Zero-Code Automation Suite
+  <!-- Notification Center Drawer -->
+  <div id="notifDrawer" class="hidden fixed inset-0 z-50 flex justify-end bg-slate-950/60 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 w-full max-w-md h-full p-5 flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Notifications &amp; Email Alerts</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Every auto-apply &amp; portal alert sent for your account.</p>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">CareerRelay Auto-Apply</h1>
-        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Configure rules, export <code class="text-xs text-indigo-500 dark:text-indigo-300">config.json</code>, track portal links, and export your history to CSV.</p>
+        <button id="closeNotifDrawerBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer">Close</button>
+      </div>
+      <div id="notifList" class="flex-1 overflow-y-auto py-4 space-y-3"></div>
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+        <button id="recheckFromNotifBtn" type="button" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">Recheck Jobs Now</button>
+        <button id="clearNotifBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Owner Setup Modal -->
+  <div id="ownerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">Owner Background Setup</h3>
+        <button id="closeOwnerModalBtn" type="button" class="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">Close</button>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Optional settings for running <code class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800">job_watcher.py</code> with your own Adzuna India API keys.</p>
+      <div class="space-y-3">
+        <div>
+          <label for="adzunaIdInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Adzuna India App ID</label>
+          <input id="adzunaIdInput" type="text" placeholder="Optional App ID" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label for="adzunaKeyInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Adzuna India App Key</label>
+          <input id="adzunaKeyInput" type="password" placeholder="Optional App Key" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+          <input id="readGmailAlertsCheck" type="checkbox" class="rounded accent-indigo-600" />
+          <span>Auto-read Naukri / LinkedIn / Indeed alert emails in Gmail (IMAP)</span>
+        </label>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="saveOwnerKeysBtn" type="button" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">Save Keys</button>
+        <button id="downloadConfigBtn" type="button" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer">Download config.json</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div id="authScreen" class="min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md bg-white/95 dark:bg-slate-900/90 backdrop-blur border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold mb-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>CareerRelay
+          </div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Find &amp; Apply Smarter</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Sign in to upload your CV, choose your own target roles, and automate job matching.</p>
+        </div>
+        <button id="authThemeBtn" type="button" class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold cursor-pointer">☀️</button>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
-        <button id="themeToggleBtn" type="button" class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition cursor-pointer shadow-sm">
-          <span id="themeIcon">☀️</span>
-          <span id="themeLabel">Light</span>
+      <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl mb-5">
+        <button id="showLoginTabBtn" type="button" class="py-2 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm cursor-pointer">Log In</button>
+        <button id="showSignupTabBtn" type="button" class="py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 cursor-pointer">Create Account</button>
+      </div>
+
+      <form id="loginForm" class="space-y-3.5">
+        <div>
+          <label for="loginUsername" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Username</label>
+          <input id="loginUsername" type="text" required placeholder="Enter your username" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label for="loginPassword" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Password</label>
+          <input id="loginPassword" type="password" required placeholder="••••••••" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold cursor-pointer">Log In</button>
+      </form>
+
+      <form id="signupForm" class="hidden space-y-3.5">
+        <div>
+          <label for="signupUsername" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Choose Username</label>
+          <input id="signupUsername" type="text" required placeholder="Choose a username" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label for="signupEmail" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Email for Job Alerts</label>
+          <input id="signupEmail" type="email" required placeholder="you@gmail.com" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label for="signupPassword" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Create Password</label>
+          <input id="signupPassword" type="password" required minlength="4" placeholder="At least 4 characters" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold cursor-pointer">Create Free Account</button>
+      </form>
+
+      <div class="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
+        <button id="demoGuestBtn" type="button" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Try Sample Demo Account →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP SCREEN -->
+  <div id="appScreen" class="hidden min-h-screen flex flex-col">
+    <nav class="sticky top-0 z-30 bg-white/85 dark:bg-slate-950/85 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+      <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+        <button id="openProfileDrawerBtn" type="button" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer" title="Open My Profile">
+          <img id="navAvatarImg" src="" alt="" class="hidden w-8 h-8 rounded-full object-cover border border-indigo-500" />
+          <div id="navAvatarFallback" class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow">U</div>
+          <div class="text-left">
+            <div class="text-sm font-bold text-slate-900 dark:text-white leading-none">CareerRelay</div>
+            <div id="userGreeting" class="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-0.5">☰ @user</div>
+          </div>
         </button>
-        <button id="openCloudModalBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition cursor-pointer shadow-sm">
-          24/7 Cloud &amp; Config
-        </button>
-        <button id="checkJobsBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 transition cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Check for New Jobs
+
+        <div class="flex items-center gap-2">
+          <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
+            <span>🔔</span>
+            <span class="hidden sm:inline">Alerts</span>
+            <span id="notifCountBadge" class="px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">0</span>
+          </button>
+          <button id="themeToggleBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
+            <span id="themeIcon">☀️</span>
+          </button>
+          <button id="logoutBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">Log Out</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div class="inline-flex bg-slate-200/70 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <button id="tabRadarBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm cursor-pointer">Job Radar</button>
+          <button id="tabCvsBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer">My CVs &amp; Alerts</button>
+          <button id="tabAppliedBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer">Applied &amp; Portals</button>
+        </div>
+
+        <button id="checkJobsBtn" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-lg cursor-pointer">
+          Scan for Jobs
         </button>
       </div>
-    </header>
 
-    <!-- Scheduler, Feed Source & Global Auto-Apply Bar -->
-    <section class="bg-white/90 dark:bg-slate-900/80 backdrop-blur border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-sm">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-3">
-            <button id="schedulerToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-emerald-500 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">
-              <span id="schedulerKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
-            </button>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+          <div id="statScanned" class="text-2xl font-bold text-slate-900 dark:text-white">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jobs Scanned</div>
+        </div>
+        <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+          <div id="statMatched" class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Matches Found</div>
+        </div>
+        <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+          <div id="statApplied" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Auto-Applied</div>
+        </div>
+        <div class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4">
+          <div id="statPortal" class="text-2xl font-bold text-amber-600 dark:text-amber-400">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Portal Links Ready</div>
+        </div>
+      </div>
+
+      <!-- TAB 1: JOB RADAR -->
+      <div id="panelRadar" class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 shadow-sm">
+          <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Quick Search on Portals:</span>
+          <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <a id="topLinkLinkedin" href="https://www.linkedin.com/jobs/" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">LinkedIn ↗</a>
+            <a id="topLinkNaukri" href="https://www.naukri.com/" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Naukri ↗</a>
+            <a id="topLinkIndeed" href="https://in.indeed.com/" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Indeed ↗</a>
+            <a id="topLinkFoundit" href="https://www.foundit.in/" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">Foundit ↗</a>
+            <a id="topLinkWellfound" href="https://wellfound.com/jobs" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">Wellfound ↗</a>
+          </div>
+        </div>
+
+        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="flex items-center gap-2.5">
+                <button id="schedulerToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-emerald-500">
+                  <span id="schedulerKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
+                </button>
+                <div>
+                  <div class="text-xs font-semibold text-slate-900 dark:text-white">Auto-Scan</div>
+                  <div id="countdownText" class="text-[11px] text-slate-500 dark:text-slate-400">Next scan in 59:59</div>
+                </div>
+              </div>
+              <select id="intervalSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                <option value="3600">Every 1 Hour</option>
+                <option value="5">Every 5 Seconds (Demo)</option>
+              </select>
+              <select id="feedSourceSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                <option value="simulated">Smart India Demo Feed</option>
+                <option value="adzuna">Live India Feed (Adzuna)</option>
+                <option value="remotive">Live Global Remote (Remotive)</option>
+                <option value="arbeitnow">Live Global Feed (Arbeitnow)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <span id="statusBadge" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Auto-Apply ON</span>
+              <button id="autoApplyToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600">
+                <span id="autoApplyKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
+              </button>
+            </div>
+          </div>
+          <div id="feedStatusMsg" class="hidden mt-3 text-xs rounded-xl px-3 py-2"></div>
+        </section>
+
+        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
             <div>
-              <div class="text-sm font-semibold text-slate-900 dark:text-white">Automatic Scheduler</div>
-              <div id="countdownText" class="text-xs text-slate-500 dark:text-slate-400">Next fetch in 59:59</div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Your Target Roles &amp; Cities</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Choose your own target job roles, cities, and CVs below.</p>
+            </div>
+            <span id="activeRulesCount" class="text-xs font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 rounded-full">0 active</span>
+          </div>
+          <div id="rulesList" class="space-y-2.5 mb-4"></div>
+          <form id="addRuleForm" class="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <input id="ruleRoleInput" list="roleSuggestions" type="text" placeholder="Pick or type job role..." class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+            <datalist id="roleSuggestions">
+              <option value="Software Engineer"></option>
+              <option value="Product Manager"></option>
+              <option value="Data Analyst"></option>
+              <option value="Business Analyst"></option>
+              <option value="Financial Analyst"></option>
+              <option value="HR Manager"></option>
+              <option value="Marketing Manager"></option>
+              <option value="Data Privacy Analyst"></option>
+              <option value="Corporate Counsel"></option>
+              <option value="Legal Compliance Specialist"></option>
+            </datalist>
+            <select id="ruleRegionInput" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200">
+              <option value="Pune">Pune</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Bengaluru">Bengaluru</option>
+              <option value="Hyderabad">Hyderabad</option>
+              <option value="Delhi NCR">Delhi NCR</option>
+              <option value="Gurugram">Gurugram</option>
+              <option value="Noida">Noida</option>
+              <option value="Chennai">Chennai</option>
+              <option value="Kolkata">Kolkata</option>
+              <option value="Ahmedabad">Ahmedabad</option>
+              <option value="Remote">Remote</option>
+              <option value="Any">Any Region</option>
+            </select>
+            <select id="ruleCvInput" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200"></select>
+            <button type="submit" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">+ Add Role</button>
+          </form>
+        </section>
+
+        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Matching Job Feed</h2>
+            <span id="feedBadge" class="text-xs text-slate-500 dark:text-slate-400">Ready</span>
+          </div>
+          <div id="jobFeedList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </section>
+      </div>
+
+      <!-- TAB 2: MY CVS & ALERTS -->
+      <div id="panelCvs" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-base font-bold text-slate-900 dark:text-white mb-1">My CVs</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Upload your CV file so CareerRelay can extract skills and match jobs.</p>
+            <div class="mb-4">
+              <input id="cvFilePicker" type="file" accept=".pdf,.doc,.docx,.txt,.md" class="hidden" />
+              <button id="uploadCvBtn" type="button" class="w-full py-3 px-4 rounded-xl border-2 border-dashed border-indigo-400/60 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-xs font-semibold cursor-pointer">
+                + Upload CV from Device (PDF / DOCX / TXT)
+              </button>
+            </div>
+            <div id="cvList" class="space-y-2 mb-4"></div>
+            <form id="addCvForm" class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div class="text-xs font-medium text-slate-600 dark:text-slate-400">Or add CV profile manually</div>
+              <div class="flex gap-2">
+                <input id="newCvName" type="text" placeholder="CV name (e.g. My_Resume.pdf)" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+                <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold cursor-pointer shrink-0">Save</button>
+              </div>
+              <input id="newCvSkills" type="text" placeholder="Key skills (e.g. Python, SQL, Project Management)" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+            </form>
+          </section>
+
+          <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-bold text-slate-900 dark:text-white">Email &amp; Auto-Apply Settings</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Configure your daily cap, match threshold, and alert email.</p>
+              </div>
+              <button id="emailNotifyToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600">
+                <span id="emailNotifyKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
+              </button>
+            </div>
+            <div>
+              <label for="notifyEmailInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Your Alert Email</label>
+              <input id="notifyEmailInput" type="email" placeholder="you@gmail.com" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+              <div id="emailValidityHint" class="text-[11px] mt-1 text-slate-400"></div>
+            </div>
+            <div>
+              <label for="emailModeSelect" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Delivery Style</label>
+              <select id="emailModeSelect" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200">
+                <option value="instant">Instant Alert per Job</option>
+                <option value="digest">Daily Summary Digest</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label for="minMatchRange" class="text-xs font-medium text-slate-600 dark:text-slate-400">Min Match %</label>
+                  <span id="minMatchVal" class="text-xs font-bold text-indigo-600 dark:text-indigo-400">75%</span>
+                </div>
+                <input id="minMatchRange" type="range" min="50" max="95" step="5" value="75" class="w-full accent-indigo-600 cursor-pointer" />
+              </div>
+              <div>
+                <label for="dailyCapInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Daily Auto-Apply Cap</label>
+                <input id="dailyCapInput" type="number" min="1" max="100" value="15" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-900 dark:text-white" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="minSalaryInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Min Salary (₹ LPA, 0 = Any)</label>
+                <input id="minSalaryInput" type="number" min="0" max="200" value="0" placeholder="e.g. 10" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label for="experienceSelect" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Experience Range</label>
+                <select id="experienceSelect" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200">
+                  <option value="Any">Any Experience</option>
+                  <option value="0-2">0–2 yrs</option>
+                  <option value="3-5">3–5 yrs</option>
+                  <option value="5+">5+ yrs</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label for="excludeKeywordsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Skip Titles With Words</label>
+              <input id="excludeKeywordsInput" type="text" placeholder="intern, internship, unpaid" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <button id="saveAlertPrefsBtn" type="button" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm cursor-pointer">
+                Save Alert Settings
+              </button>
+              <button id="sendTestAlertBtn" type="button" class="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold cursor-pointer">
+                Send Test Notification
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- TAB 3: APPLIED & PORTALS -->
+      <div id="panelApplied" class="hidden space-y-6">
+        <section class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Company Portals (1-Click Apply)</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Jobs that require applying directly on the company's website.</p>
+            </div>
+            <button id="clearPortalBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">Clear</button>
+          </div>
+          <div id="portalQueueList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </section>
+
+        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Applied Jobs History</h2>
+            <div class="flex items-center gap-3">
+              <button id="exportCsvBtn" type="button" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">Export CSV</button>
+              <button id="clearLogBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">Clear</button>
             </div>
           </div>
-
-          <div class="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
-
-          <div class="flex items-center gap-2">
-            <label for="intervalSelect" class="text-xs font-medium text-slate-600 dark:text-slate-400">Frequency:</label>
-            <select id="intervalSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="3600" selected>Every 1 Hour (Production)</option>
-              <option value="5">Every 5 Seconds (Live Demo)</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <label for="feedSourceSelect" class="text-xs font-medium text-slate-600 dark:text-slate-400">Source:</label>
-            <select id="feedSourceSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="simulated" selected>Simulated Recruiter Feed</option>
-              <option value="remotive">Live Public Feed (Remotive)</option>
-              <option value="arbeitnow">Live Public Feed (Arbeitnow)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between lg:justify-end gap-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2">
-          <span id="statusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
-            Auto-Apply ON
-          </span>
-          <button id="autoApplyToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <span id="autoApplyKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
-          </button>
-        </div>
+          <input id="searchAppliedInput" type="text" placeholder="Search applied jobs..." class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white mb-3" />
+          <div id="appliedList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </section>
       </div>
-      <div id="feedStatusMsg" class="hidden mt-3 text-xs rounded-xl px-3 py-2"></div>
-    </section>
+    </main>
 
-    <!-- Summary Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-      <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
-        <div id="statScanned" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">0</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Jobs Scanned</div>
+    <footer class="max-w-5xl w-full mx-auto px-4 py-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+      <span>CareerRelay — Smart Multi-CV Job Matching</span>
+      <div class="flex items-center gap-3">
+        <button id="resetDemoBtn" type="button" class="hover:text-slate-800 dark:hover:text-white cursor-pointer">Reset My Data</button>
+        <button id="openOwnerModalBtn" type="button" class="hover:text-slate-800 dark:hover:text-white cursor-pointer">Owner Setup</button>
       </div>
-      <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
-        <div id="statMatched" class="text-2xl sm:text-3xl font-bold text-indigo-600 dark:text-indigo-400">0</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Matches Found</div>
-      </div>
-      <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center shadow-sm">
-        <div id="statApplied" class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">0</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Applied</div>
-      </div>
-      <div class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 text-center shadow-sm">
-        <div id="statPortal" class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">0</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Portal Action Needed</div>
-      </div>
-    </div>
-
-    <!-- Multi-Role Rules & CV Library -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-      <!-- CV Library -->
-      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-1">1. CV Library</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Saved automatically in your browser.</p>
-
-        <div id="cvList" class="space-y-2 mb-4"></div>
-
-        <form id="addCvForm" class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <label for="newCvName" class="block text-xs font-medium text-slate-600 dark:text-slate-400">Add a CV</label>
-          <div class="flex gap-2">
-            <input id="newCvName" type="text" placeholder="e.g. Legal_Ops_CV.pdf" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-900 dark:border-slate-700 text-white text-xs font-semibold cursor-pointer shrink-0">Add</button>
-          </div>
-          <input id="newCvSkills" type="text" placeholder="CV skills (e.g. DPDP, GDPR, DPIA)" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <div>
-            <label for="cvFilePicker" class="inline-flex items-center gap-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium cursor-pointer">
-              <span>Or pick a file from your device</span>
-              <input id="cvFilePicker" type="file" accept=".pdf,.doc,.docx" class="hidden" />
-            </label>
-          </div>
-        </form>
-      </section>
-
-      <!-- Simultaneous Role + Region + CV Rules -->
-      <section class="lg:col-span-2 bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">2. Simultaneous Role &amp; Region Rules</h2>
-          <span id="activeRulesCount" class="text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-2.5 py-0.5 rounded-full">2 active</span>
-        </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Includes 1-click pre-filtered search links for LinkedIn, Naukri, Indeed, Foundit, and Wellfound.</p>
-
-        <div id="rulesList" class="space-y-2.5 mb-4"></div>
-
-        <form id="addRuleForm" class="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <input id="ruleRoleInput" list="roleSuggestions" type="text" placeholder="Pick or type job role..." class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <datalist id="roleSuggestions">
-            <option value="Data Privacy Analyst"></option>
-            <option value="Data Protection Officer"></option>
-            <option value="Privacy Counsel"></option>
-            <option value="Corporate Counsel"></option>
-            <option value="Legal Compliance Specialist"></option>
-            <option value="Contract Manager"></option>
-            <option value="GRC Analyst"></option>
-            <option value="Cybersecurity Analyst"></option>
-            <option value="Software Engineer"></option>
-            <option value="Product Manager"></option>
-            <option value="Data Analyst"></option>
-            <option value="Business Analyst"></option>
-            <option value="Financial Analyst"></option>
-            <option value="HR Manager"></option>
-          </datalist>
-          <select id="ruleRegionInput" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="Pune">Pune</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Bengaluru">Bengaluru</option>
-            <option value="Hyderabad">Hyderabad</option>
-            <option value="Delhi NCR">Delhi NCR</option>
-            <option value="Gurugram">Gurugram</option>
-            <option value="Noida">Noida</option>
-            <option value="Chennai">Chennai</option>
-            <option value="Kolkata">Kolkata</option>
-            <option value="Ahmedabad">Ahmedabad</option>
-            <option value="Remote">Remote</option>
-            <option value="Any">Any Region</option>
-          </select>
-          <select id="ruleCvInput" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
-          <button type="submit" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">+ Add Rule</button>
-        </form>
-      </section>
-    </div>
-
-    <!-- Email Notification, Filters & Company Boards Settings -->
-    <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 mb-6 shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">3. Email Alerts, Filters &amp; Zero-Code Config</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Everything here exports straight into <code class="text-indigo-500 dark:text-indigo-300">config.json</code> for <code class="text-indigo-500 dark:text-indigo-300">job_watcher.py</code>.</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="flex flex-col">
-            <input id="notifyEmailInput" type="email" placeholder="your.email@example.com" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 w-52 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <span id="emailValidityHint" class="text-[10px] mt-1 text-slate-400"></span>
-          </div>
-          <select id="emailModeSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="instant">Instant Alerts</option>
-            <option value="digest">Summary Digest</option>
-          </select>
-          <button id="emailNotifyToggle" type="button" role="switch" aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <span id="emailNotifyKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-        <div>
-          <label for="excludeKeywordsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Exclude Keywords (comma-separated)</label>
-          <input id="excludeKeywordsInput" type="text" placeholder="intern, internship, unpaid" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-        <div class="flex flex-col justify-between gap-2">
-          <div>
-            <label for="companyBoardsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Greenhouse / Lever Company Slugs (comma-separated)</label>
-            <div class="flex gap-2">
-              <input id="companyBoardsInput" type="text" placeholder="e.g. stripe, figma, atlassian" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-              <button id="quickDownloadConfigBtn" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shrink-0">Download config.json</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Manual Portal Queue (Company Portal Required) -->
-    <section class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-5 mb-6 shadow-sm">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">4. Manual Portal Queue (Direct Links)</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Companies that require applying on their own portal appear here with a direct link and your recommended CV.</p>
-        </div>
-        <button id="clearPortalBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer shrink-0">Clear queue</button>
-      </div>
-      <div id="portalQueueList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-    </section>
-
-    <!-- Recruiter Job Feed, Applied Log & Email Outbox -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">5. Job Feed</h2>
-          <span id="feedBadge" class="text-xs text-slate-500 dark:text-slate-400">Simulated</span>
-        </div>
-        <div id="jobFeedList" class="space-y-3"></div>
-      </section>
-
-      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between gap-2 mb-3">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">6. Applied Jobs Log</h2>
-          <div class="flex items-center gap-2.5">
-            <button id="exportCsvBtn" type="button" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">Export CSV</button>
-            <button id="clearLogBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">Clear</button>
-          </div>
-        </div>
-        <input id="searchAppliedInput" type="text" placeholder="Filter by role, company, or CV..." class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-        <div id="appliedList" class="space-y-3"></div>
-      </section>
-
-      <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">7. Email Alert Outbox</h2>
-          <button id="clearEmailBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">Clear</button>
-        </div>
-        <div id="emailOutboxList" class="space-y-3"></div>
-      </section>
-    </div>
+    </footer>
   </div>
 
   <script>
-    const STORAGE_KEY = "careerrelay_state_v5";
+    const ACCOUNTS_KEY = "careerrelay_accounts_v2";
+    const SESSION_KEY = "careerrelay_session_v2";
 
     const SAMPLE_JOBS = [
-      { title: "Data Privacy Analyst", skills: "DPDP, GDPR, DPIA", company: "FinSecure Systems", recruiter: "Ananya Verma (Recruiter)", region: "Pune", applyType: "auto", url: "https://example.com/jobs/finsecure-privacy" },
-      { title: "Corporate Counsel", skills: "Contracts, SaaS, Vendor Agreements", company: "Apex Logistics", recruiter: "Company Career Portal", region: "Pune", applyType: "portal", url: "https://boards.greenhouse.io/example/jobs/apex-counsel" },
-      { title: "Legal Compliance Specialist", skills: "Regulatory, Audit, Policy", company: "Meridian Bank", recruiter: "Priya Nair (HR)", region: "Mumbai", applyType: "portal", url: "https://example.com/careers/meridian-compliance" },
-      { title: "Data Privacy Analyst", skills: "GDPR, RoPA, Privacy Governance", company: "NovaPay Global", recruiter: "Company Career Portal", region: "Pune", applyType: "portal", url: "https://jobs.lever.co/example/novapay-privacy" },
-      { title: "Product Manager", skills: "Roadmap, Agile, Analytics", company: "BrightCart", recruiter: "Karan Gill (Recruiter)", region: "Remote", applyType: "auto", url: "https://example.com/jobs/brightcart-pm" },
-      { title: "Corporate Counsel", skills: "M&A, Corporate Law, Compliance", company: "CloudScale India", recruiter: "Meera Iyer (Talent)", region: "Bengaluru", applyType: "portal", url: "https://example.com/careers/cloudscale-counsel" },
-      { title: "Data Protection Officer", skills: "DPDP, GDPR, Risk Assessment", company: "Veritas FinTech", recruiter: "Ritu Sharma (HR)", region: "Hyderabad", applyType: "portal", url: "https://example.com/careers/veritas-dpo" },
-      { title: "GRC Analyst", skills: "ISO 27001, Compliance, Risk", company: "ShieldNet India", recruiter: "Arjun Nair (Talent)", region: "Gurugram", applyType: "auto", url: "https://example.com/jobs/shieldnet-grc" },
-      { title: "Software Engineer", skills: "Python, APIs, Cloud", company: "NextWave Labs", recruiter: "Devika Rao (Recruiter)", region: "Chennai", applyType: "portal", url: "https://example.com/careers/nextwave-swe" },
-      { title: "Data Privacy Analyst", skills: "DPDP, Consent, Data Mapping", company: "Vanguard Health", recruiter: "Neha Kulkarni (Recruiter)", region: "Remote", applyType: "auto", url: "https://example.com/jobs/vanguard-privacy" }
+      { title: "Software Engineer", skills: "Python, AWS, Docker, SQL", salaryLpa: 14, expLevel: "3-5", company: "NextWave Tech", region: "Bengaluru", applyType: "auto", applyEmail: "careers@nextwave.in", url: "" },
+      { title: "Product Manager", skills: "Product Management, Roadmap, Agile, SQL", salaryLpa: 18, expLevel: "3-5", company: "BrightCart India", region: "Remote", applyType: "auto", applyEmail: "talent@brightcart.in", url: "" },
+      { title: "Business Analyst", skills: "SQL, Data Analysis, Excel, Power BI", salaryLpa: 9, expLevel: "0-2", company: "Meridian FinServe", region: "Mumbai", applyType: "portal", url: "" },
+      { title: "Data Analyst", skills: "SQL, Python, Power BI, Tableau", salaryLpa: 11, expLevel: "0-2", company: "InsightGrid", region: "Pune", applyType: "auto", applyEmail: "hr@insightgrid.in", url: "" },
+      { title: "Financial Analyst", skills: "Financial Modeling, Excel, FP&A", salaryLpa: 13, expLevel: "3-5", company: "Crest Capital", region: "Gurugram", applyType: "portal", url: "" },
+      { title: "HR Manager", skills: "Talent Acquisition, HRIS, Payroll", salaryLpa: 12, expLevel: "5+", company: "PeopleFirst Global", region: "Hyderabad", applyType: "auto", applyEmail: "jobs@peoplefirst.in", url: "" },
+      { title: "Data Privacy Analyst", skills: "DPDP, GDPR, DPIA, ISO 27001", salaryLpa: 16, expLevel: "3-5", company: "FinSecure Systems", region: "Pune", applyType: "auto", applyEmail: "careers@finsecure.in", url: "" },
+      { title: "Corporate Counsel", skills: "Contract Drafting, Compliance, Corporate Law", salaryLpa: 22, expLevel: "5+", company: "Apex Logistics", region: "Mumbai", applyType: "portal", url: "" }
     ];
 
-    const defaultState = {
-      theme: "dark",
-      autoApply: true,
-      schedulerOn: true,
-      intervalSec: 3600,
-      feedSource: "simulated",
-      notifyEmail: "",
-      emailMode: "instant",
-      emailAlertsOn: true,
-      excludeKeywords: "intern, internship, unpaid",
-      companyBoards: "",
-      scannedCount: 0,
-      matchedCount: 0,
-      cvs: [
-        { id: "cv-1", name: "Data_Privacy_DPDP_CV.pdf", skills: "DPDP, GDPR, DPIA, RoPA" },
-        { id: "cv-2", name: "Corporate_Counsel_CV.pdf", skills: "Contracts, Vendor Agreements, Compliance" },
-        { id: "cv-3", name: "Legal_Compliance_CV.pdf", skills: "Regulatory, Audit, Policy, Risk" }
-      ],
-      rules: [
-        { id: "rule-1", role: "Data Privacy Analyst", region: "Pune", cvId: "cv-1", active: true },
-        { id: "rule-2", role: "Corporate Counsel", region: "Pune", cvId: "cv-2", active: true }
-      ],
-      feed: [],
-      portalQueue: [],
-      applied: [],
-      emailOutbox: [],
-      nextJobIndex: 0
-    };
+    const KNOWN_SKILLS = [
+      "Python", "JavaScript", "TypeScript", "React", "Node.js", "Java", "C++", "SQL",
+      "PostgreSQL", "MongoDB", "AWS", "Azure", "GCP", "Docker", "Kubernetes", "Git",
+      "REST API", "Machine Learning", "TensorFlow", "Power BI", "Tableau", "Excel",
+      "Data Analysis", "Product Management", "Roadmap", "Agile", "Scrum", "JIRA",
+      "Figma", "UI/UX", "SEO", "Google Analytics", "Content Marketing", "Social Media",
+      "CRM", "Salesforce", "HubSpot", "Financial Modeling", "Accounting", "Tally",
+      "SAP", "FP&A", "Budgeting", "Recruitment", "Talent Acquisition", "HRIS",
+      "Payroll", "Onboarding", "Supply Chain", "Procurement", "Project Management",
+      "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "DPIA", "RoPA",
+      "Privacy by Design", "Data Protection", "ISO 27001", "SOC 2", "GRC",
+      "Compliance", "Contract Drafting", "Contract Negotiation", "Corporate Law",
+      "Vendor Risk", "Risk Management", "Internal Audit", "Information Security"
+    ];
 
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return { ...defaultState, secondsLeft: defaultState.intervalSec };
-        const parsed = JSON.parse(raw);
-        return {
-          ...defaultState,
-          ...parsed,
-          secondsLeft: parsed.intervalSec || defaultState.intervalSec
-        };
-      } catch (e) {
-        return { ...defaultState, secondsLeft: defaultState.intervalSec };
+    function extractSkillsFromText(rawText) {
+      if (!rawText || !rawText.trim()) return [];
+      const cleaned = rawText.replace(/\s+/g, " ");
+      const found = [];
+      for (const skill of KNOWN_SKILLS) {
+        const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const re = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, "i");
+        if (re.test(cleaned)) found.push(skill);
       }
+      return found.slice(0, 12);
     }
 
-    function saveState() {
-      try {
-        const toSave = { ...state };
-        delete toSave.secondsLeft;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-      } catch (e) {
-        // Ignore storage errors
-      }
+    const DEFAULT_COVER_TEMPLATE = [
+      "Dear {{company}} Hiring Team,",
+      "",
+      "I am writing to express my strong interest in the {{role}} position ({{region}}). With hands-on experience across {{skills}}, I am confident I can contribute immediately to your team's goals.",
+      "",
+      "Please find my resume attached for your review. I would welcome the opportunity to discuss how my background aligns with {{company}}'s needs.",
+      "",
+      "Best regards,",
+      "{{name}}",
+      "{{email}}"
+    ].join("\n");
+
+    function defaultUserData(email, isDemo) {
+      return {
+        theme: "dark",
+        fullName: isDemo ? "Demo Candidate" : "",
+        headline: isDemo ? "Product & Analytics Professional" : "",
+        phone: "",
+        linkedinUrl: "",
+        portfolioUrl: "",
+        coverLetterTemplate: DEFAULT_COVER_TEMPLATE,
+        avatarDataUrl: "",
+        autoApply: true,
+        schedulerOn: true,
+        intervalSec: 3600,
+        feedSource: "simulated",
+        notifyEmail: email || "",
+        emailMode: "instant",
+        emailAlertsOn: true,
+        excludeKeywords: "intern, internship, unpaid",
+        minMatchScore: 75,
+        maxDailyApplies: 15,
+        minSalaryLpa: 0,
+        experienceLevel: "Any",
+        adzunaAppId: "",
+        adzunaAppKey: "",
+        readGmailAlerts: false,
+        scannedCount: 0,
+        matchedCount: 0,
+        cvs: isDemo ? [{ id: "cv-1", name: "Sample_Resume.pdf", skills: "Product, Agile, Analytics, SQL" }] : [],
+        rules: isDemo ? [{ id: "rule-1", role: "Product Manager", region: "Remote", cvId: "cv-1", active: true }] : [],
+        feed: [],
+        portalQueue: [],
+        applied: [],
+        notifications: [],
+        nextJobIndex: 0
+      };
     }
 
-    const state = loadState();
-    let timerHandle = null;
+    function loadAccounts() {
+      try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || "{}"); } catch (e) { return {}; }
+    }
+    function saveAccounts(accounts) {
+      try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts)); } catch (e) {}
+    }
+
+    let currentUser = null;
+    let state = defaultUserData("", false);
     let appliedSearchTerm = "";
+    let timerHandle = null;
+    let secondsLeft = 3600;
 
+    function persistCurrentUser() {
+      if (!currentUser) return;
+      const accounts = loadAccounts();
+      if (accounts[currentUser]) {
+        accounts[currentUser].data = state;
+        saveAccounts(accounts);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    const authScreen = document.getElementById("authScreen");
+    const appScreen = document.getElementById("appScreen");
+    const authThemeBtn = document.getElementById("authThemeBtn");
+    const showLoginTabBtn = document.getElementById("showLoginTabBtn");
+    const showSignupTabBtn = document.getElementById("showSignupTabBtn");
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+    const loginUsername = document.getElementById("loginUsername");
+    const loginPassword = document.getElementById("loginPassword");
+    const signupUsername = document.getElementById("signupUsername");
+    const signupEmail = document.getElementById("signupEmail");
+    const signupPassword = document.getElementById("signupPassword");
+    const demoGuestBtn = document.getElementById("demoGuestBtn");
+
+    const userGreeting = document.getElementById("userGreeting");
+    const openProfileDrawerBtn = document.getElementById("openProfileDrawerBtn");
+    const closeProfileDrawerBtn = document.getElementById("closeProfileDrawerBtn");
+    const profileDrawer = document.getElementById("profileDrawer");
+    const navAvatarImg = document.getElementById("navAvatarImg");
+    const navAvatarFallback = document.getElementById("navAvatarFallback");
+    const profileAvatarImg = document.getElementById("profileAvatarImg");
+    const profileAvatarFallback = document.getElementById("profileAvatarFallback");
+    const profilePhotoInput = document.getElementById("profilePhotoInput");
+    const changePhotoBtn = document.getElementById("changePhotoBtn");
+    const profileDrawerUsername = document.getElementById("profileDrawerUsername");
+    const profileDrawerStats = document.getElementById("profileDrawerStats");
+    const profileForm = document.getElementById("profileForm");
+    const profileFullName = document.getElementById("profileFullName");
+    const profileHeadline = document.getElementById("profileHeadline");
+    const profilePhone = document.getElementById("profilePhone");
+    const profileLinkedIn = document.getElementById("profileLinkedIn");
+    const profilePortfolio = document.getElementById("profilePortfolio");
+    const profileCoverTemplate = document.getElementById("profileCoverTemplate");
+    const resetCoverTemplateBtn = document.getElementById("resetCoverTemplateBtn");
+    const drawerLogoutBtn = document.getElementById("drawerLogoutBtn");
+
+    const logoutBtn = document.getElementById("logoutBtn");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const themeIcon = document.getElementById("themeIcon");
-    const themeLabel = document.getElementById("themeLabel");
+    const openNotifBtn = document.getElementById("openNotifBtn");
+    const notifCountBadge = document.getElementById("notifCountBadge");
+    const notifDrawer = document.getElementById("notifDrawer");
+    const closeNotifDrawerBtn = document.getElementById("closeNotifDrawerBtn");
+    const notifList = document.getElementById("notifList");
+    const recheckFromNotifBtn = document.getElementById("recheckFromNotifBtn");
+    const clearNotifBtn = document.getElementById("clearNotifBtn");
 
-    const cloudModal = document.getElementById("cloudModal");
-    const openCloudModalBtn = document.getElementById("openCloudModalBtn");
-    const closeCloudModalBtn = document.getElementById("closeCloudModalBtn");
-    const copyYamlBtn = document.getElementById("copyYamlBtn");
-    const copyRulesBtn = document.getElementById("copyRulesBtn");
-    const downloadConfigBtn = document.getElementById("downloadConfigBtn");
-    const quickDownloadConfigBtn = document.getElementById("quickDownloadConfigBtn");
-    const workflowYaml = document.getElementById("workflowYaml");
+    const tabRadarBtn = document.getElementById("tabRadarBtn");
+    const tabCvsBtn = document.getElementById("tabCvsBtn");
+    const tabAppliedBtn = document.getElementById("tabAppliedBtn");
+    const panelRadar = document.getElementById("panelRadar");
+    const panelCvs = document.getElementById("panelCvs");
+    const panelApplied = document.getElementById("panelApplied");
 
+    const toastContainer = document.getElementById("toastContainer");
+    const checkJobsBtn = document.getElementById("checkJobsBtn");
     const schedulerToggle = document.getElementById("schedulerToggle");
     const schedulerKnob = document.getElementById("schedulerKnob");
     const countdownText = document.getElementById("countdownText");
     const intervalSelect = document.getElementById("intervalSelect");
     const feedSourceSelect = document.getElementById("feedSourceSelect");
     const feedStatusMsg = document.getElementById("feedStatusMsg");
-    const feedBadge = document.getElementById("feedBadge");
     const autoApplyToggle = document.getElementById("autoApplyToggle");
     const autoApplyKnob = document.getElementById("autoApplyKnob");
     const statusBadge = document.getElementById("statusBadge");
-    const checkJobsBtn = document.getElementById("checkJobsBtn");
-    const clearPortalBtn = document.getElementById("clearPortalBtn");
-    const clearLogBtn = document.getElementById("clearLogBtn");
-    const exportCsvBtn = document.getElementById("exportCsvBtn");
-    const searchAppliedInput = document.getElementById("searchAppliedInput");
-    const clearEmailBtn = document.getElementById("clearEmailBtn");
-    const notifyEmailInput = document.getElementById("notifyEmailInput");
-    const emailValidityHint = document.getElementById("emailValidityHint");
-    function updateEmailHint() {
-      const val = (state.notifyEmail || "").trim();
-      if (!val) {
-        emailValidityHint.textContent = "Required for config.json";
-        emailValidityHint.className = "text-[10px] mt-1 text-slate-400";
-      } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-        emailValidityHint.textContent = "✓ Valid format (sent via job_watcher.py)";
-        emailValidityHint.className = "text-[10px] mt-1 text-emerald-500";
-      } else {
-        emailValidityHint.textContent = "Enter a valid email address";
-        emailValidityHint.className = "text-[10px] mt-1 text-amber-500";
-      }
-    }
-    const emailModeSelect = document.getElementById("emailModeSelect");
-    const emailNotifyToggle = document.getElementById("emailNotifyToggle");
-    const emailNotifyKnob = document.getElementById("emailNotifyKnob");
-    const excludeKeywordsInput = document.getElementById("excludeKeywordsInput");
-    const companyBoardsInput = document.getElementById("companyBoardsInput");
-    const cvList = document.getElementById("cvList");
-    const addCvForm = document.getElementById("addCvForm");
-    const newCvName = document.getElementById("newCvName");
-    const newCvSkills = document.getElementById("newCvSkills");
-    const cvFilePicker = document.getElementById("cvFilePicker");
+
+    const statScanned = document.getElementById("statScanned");
+    const statMatched = document.getElementById("statMatched");
+    const statApplied = document.getElementById("statApplied");
+    const statPortal = document.getElementById("statPortal");
+
     const rulesList = document.getElementById("rulesList");
     const activeRulesCount = document.getElementById("activeRulesCount");
     const addRuleForm = document.getElementById("addRuleForm");
     const ruleRoleInput = document.getElementById("ruleRoleInput");
     const ruleRegionInput = document.getElementById("ruleRegionInput");
     const ruleCvInput = document.getElementById("ruleCvInput");
-    const portalQueueList = document.getElementById("portalQueueList");
     const jobFeedList = document.getElementById("jobFeedList");
+    const feedBadge = document.getElementById("feedBadge");
+    const topLinkLinkedin = document.getElementById("topLinkLinkedin");
+    const topLinkNaukri = document.getElementById("topLinkNaukri");
+    const topLinkIndeed = document.getElementById("topLinkIndeed");
+    const topLinkFoundit = document.getElementById("topLinkFoundit");
+    const topLinkWellfound = document.getElementById("topLinkWellfound");
+
+    const cvFilePicker = document.getElementById("cvFilePicker");
+    const uploadCvBtn = document.getElementById("uploadCvBtn");
+    const cvList = document.getElementById("cvList");
+    const addCvForm = document.getElementById("addCvForm");
+    const newCvName = document.getElementById("newCvName");
+    const newCvSkills = document.getElementById("newCvSkills");
+
+    const emailNotifyToggle = document.getElementById("emailNotifyToggle");
+    const emailNotifyKnob = document.getElementById("emailNotifyKnob");
+    const notifyEmailInput = document.getElementById("notifyEmailInput");
+    const emailValidityHint = document.getElementById("emailValidityHint");
+    const emailModeSelect = document.getElementById("emailModeSelect");
+    const minMatchRange = document.getElementById("minMatchRange");
+    const minMatchVal = document.getElementById("minMatchVal");
+    const dailyCapInput = document.getElementById("dailyCapInput");
+    const minSalaryInput = document.getElementById("minSalaryInput");
+    const experienceSelect = document.getElementById("experienceSelect");
+    const excludeKeywordsInput = document.getElementById("excludeKeywordsInput");
+    const saveAlertPrefsBtn = document.getElementById("saveAlertPrefsBtn");
+    const sendTestAlertBtn = document.getElementById("sendTestAlertBtn");
+
+    const portalQueueList = document.getElementById("portalQueueList");
+    const clearPortalBtn = document.getElementById("clearPortalBtn");
     const appliedList = document.getElementById("appliedList");
-    const emailOutboxList = document.getElementById("emailOutboxList");
-    const toastContainer = document.getElementById("toastContainer");
-    const statScanned = document.getElementById("statScanned");
-    const statMatched = document.getElementById("statMatched");
-    const statApplied = document.getElementById("statApplied");
-    const statPortal = document.getElementById("statPortal");
+    const searchAppliedInput = document.getElementById("searchAppliedInput");
+    const exportCsvBtn = document.getElementById("exportCsvBtn");
+    const clearLogBtn = document.getElementById("clearLogBtn");
+
+    const resetDemoBtn = document.getElementById("resetDemoBtn");
+    const openOwnerModalBtn = document.getElementById("openOwnerModalBtn");
+    const ownerModal = document.getElementById("ownerModal");
+    const closeOwnerModalBtn = document.getElementById("closeOwnerModalBtn");
+    const adzunaIdInput = document.getElementById("adzunaIdInput");
+    const adzunaKeyInput = document.getElementById("adzunaKeyInput");
+    const readGmailAlertsCheck = document.getElementById("readGmailAlertsCheck");
+    const saveOwnerKeysBtn = document.getElementById("saveOwnerKeysBtn");
+    const downloadConfigBtn = document.getElementById("downloadConfigBtn");
 
     function applyTheme() {
       const isDark = state.theme !== "light";
       document.documentElement.classList.toggle("dark", isDark);
       themeIcon.textContent = isDark ? "☀️" : "🌙";
-      themeLabel.textContent = isDark ? "Light" : "Dark";
-    }
-
-    function downloadFile(filename, content, mimeType) {
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function buildConfigJson() {
-      const boards = state.companyBoards
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const excludes = state.excludeKeywords
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      return JSON.stringify({
-        recipient_email: state.notifyEmail.trim() || "your.email@gmail.com",
-        sender_email: state.notifyEmail.trim() || "your.email@gmail.com",
-        email_mode: state.emailMode || "instant",
-        check_interval_seconds: state.intervalSec || 3600,
-        exclude_keywords: excludes,
-        greenhouse_boards: boards,
-        lever_companies: boards,
-        ashby_companies: boards,
-        rules: state.rules.filter((r) => r.active).map((r) => ({
-          role: r.role,
-          region: r.region,
-          cv_file: getCvName(r.cvId)
-        }))
-      }, null, 2);
-    }
-
-    function exportAppliedCsv() {
-      if (state.applied.length === 0) {
-        showToast("Nothing to export", "Apply to at least one job first.", false);
-        return;
-      }
-      const headers = ["Title", "Company", "Region", "CV Sent", "Method", "Time"];
-      const escapeCsv = (val) => `"${String(val || "").replace(/"/g, '""')}"`;
-      const rows = state.applied.map((a) =>
-        [a.title, a.company, a.region, a.cvName, a.method || "Auto", a.time].map(escapeCsv).join(",")
-      );
-      const csv = [headers.join(","), ...rows].join("\n");
-      downloadFile("careerrelay_applied_jobs.csv", csv, "text/csv;charset=utf-8");
-      showToast("CSV Exported", "Saved careerrelay_applied_jobs.csv.", true);
-    }
-
-    function copyText(text, label) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-          showToast("Copied", `${label} copied to clipboard.`, true);
-        }).catch(() => fallbackCopy(text, label));
-      } else {
-        fallbackCopy(text, label);
-      }
-    }
-
-    function fallbackCopy(text, label) {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        document.execCommand("copy");
-        showToast("Copied", `${label} copied to clipboard.`, true);
-      } catch (e) {
-        showToast("Copy unavailable", "Select and copy the text manually.", false);
-      }
-      ta.remove();
+      authThemeBtn.textContent = isDark ? "☀️" : "🌙";
     }
 
     function showToast(title, message, isSuccess) {
@@ -564,144 +723,61 @@ jobs:
         (isSuccess ? "border-emerald-300 dark:border-emerald-500/50" : "border-amber-300 dark:border-amber-500/50");
       toast.innerHTML = `
         <div class="flex items-start gap-3">
-          <span class="mt-1 w-2.5 h-2.5 rounded-full shrink-0 ${isSuccess ? "bg-emerald-500 dark:bg-emerald-400" : "bg-amber-500 dark:bg-amber-400"}"></span>
+          <span class="mt-1 w-2.5 h-2.5 rounded-full shrink-0 ${isSuccess ? "bg-emerald-500" : "bg-amber-500"}"></span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-bold text-slate-900 dark:text-white">${title}</p>
-              <button type="button" data-toast-close class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-bold leading-none cursor-pointer px-1" aria-label="Close notification">✕</button>
+              <p class="text-xs font-bold text-slate-900 dark:text-white">${escapeHtml(title)}</p>
+              <button type="button" data-toast-close class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-bold cursor-pointer px-1">✕</button>
             </div>
-            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">${message}</p>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">${escapeHtml(message)}</p>
             <div class="mt-2.5 flex items-center gap-2">
               <button type="button" data-toast-recheck class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold cursor-pointer">Recheck</button>
-              <button type="button" data-toast-close class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-semibold cursor-pointer">Close</button>
+              <button type="button" data-toast-close class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold cursor-pointer">Close</button>
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
       toast.addEventListener("click", (e) => {
-        if (e.target.closest("[data-toast-close]")) {
-          toast.remove();
-          return;
-        }
-        if (e.target.closest("[data-toast-recheck]")) {
-          toast.remove();
-          state.secondsLeft = state.intervalSec;
-          checkForNewJobs();
-          updateCountdownUI();
-        }
+        if (e.target.closest("[data-toast-close]")) { toast.remove(); return; }
+        if (e.target.closest("[data-toast-recheck]")) { toast.remove(); secondsLeft = state.intervalSec; checkForNewJobs(); }
       });
       toastContainer.appendChild(toast);
-      setTimeout(() => {
-        if (toast.parentNode) toast.remove();
-      }, 8000);
+      setTimeout(() => { if (toast.parentNode) toast.remove(); }, 8000);
     }
 
-    function setFeedStatus(text, isError) {
-      if (!text) {
-        feedStatusMsg.classList.add("hidden");
-        return;
-      }
-      feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 " +
-        (isError
-          ? "bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20"
-          : "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20");
-      feedStatusMsg.textContent = text;
+    function switchAuthTab(mode) {
+      loginForm.classList.toggle("hidden", mode !== "login");
+      signupForm.classList.toggle("hidden", mode === "login");
+      showLoginTabBtn.className = mode === "login"
+        ? "py-2 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm cursor-pointer"
+        : "py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 cursor-pointer";
+      showSignupTabBtn.className = mode !== "login"
+        ? "py-2 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm cursor-pointer"
+        : "py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 cursor-pointer";
     }
 
-    function formatTime(totalSec) {
-      const m = Math.floor(totalSec / 60);
-      const s = totalSec % 60;
-      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    function enterApp(username) {
+      const accounts = loadAccounts();
+      currentUser = username;
+      state = { ...defaultUserData("", username === "demo"), ...(accounts[username]?.data || {}) };
+      secondsLeft = state.intervalSec || 3600;
+      try { localStorage.setItem(SESSION_KEY, username); } catch (e) {}
+      authScreen.classList.add("hidden");
+      appScreen.classList.remove("hidden");
+      applyTheme();
+      switchTab("radar");
+      render();
+      startScheduler();
     }
 
-    function updateCountdownUI() {
-      if (!state.schedulerOn) {
-        countdownText.textContent = "Scheduler paused";
-      } else {
-        countdownText.textContent = "Next fetch in " + formatTime(state.secondsLeft);
-      }
-    }
-
-    function startScheduler() {
-      if (timerHandle) clearInterval(timerHandle);
-      if (!state.schedulerOn) {
-        updateCountdownUI();
-        return;
-      }
-      timerHandle = setInterval(() => {
-        if (!state.schedulerOn) return;
-        state.secondsLeft -= 1;
-        if (state.secondsLeft <= 0) {
-          state.secondsLeft = state.intervalSec;
-          checkForNewJobs();
-        }
-        updateCountdownUI();
-      }, 1000);
-      updateCountdownUI();
-    }
-
-    function updateToggleUI() {
-      intervalSelect.value = String(state.intervalSec);
-      feedSourceSelect.value = state.feedSource;
-      if (state.feedSource === "remotive") {
-        feedBadge.textContent = "Live (Remotive)";
-      } else if (state.feedSource === "arbeitnow") {
-        feedBadge.textContent = "Live (Arbeitnow)";
-      } else {
-        feedBadge.textContent = "Simulated";
-      }
-      notifyEmailInput.value = state.notifyEmail || "";
-      emailModeSelect.value = state.emailMode || "instant";
-      excludeKeywordsInput.value = state.excludeKeywords || "";
-      companyBoardsInput.value = state.companyBoards || "";
-
-      autoApplyToggle.setAttribute("aria-checked", String(state.autoApply));
-      if (state.autoApply) {
-        autoApplyToggle.classList.remove("bg-slate-300", "dark:bg-slate-700");
-        autoApplyToggle.classList.add("bg-indigo-600");
-        autoApplyKnob.classList.add("translate-x-5");
-        autoApplyKnob.classList.remove("translate-x-0");
-        statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20";
-        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>Auto-Apply ON';
-      } else {
-        autoApplyToggle.classList.remove("bg-indigo-600");
-        autoApplyToggle.classList.add("bg-slate-300", "dark:bg-slate-700");
-        autoApplyKnob.classList.remove("translate-x-5");
-        autoApplyKnob.classList.add("translate-x-0");
-        statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20";
-        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400"></span>Notify Only';
-      }
-
-      schedulerToggle.setAttribute("aria-checked", String(state.schedulerOn));
-      if (state.schedulerOn) {
-        schedulerToggle.classList.remove("bg-slate-300", "dark:bg-slate-700");
-        schedulerToggle.classList.add("bg-emerald-500");
-        schedulerKnob.classList.add("translate-x-5");
-        schedulerKnob.classList.remove("translate-x-0");
-      } else {
-        schedulerToggle.classList.remove("bg-emerald-500");
-        schedulerToggle.classList.add("bg-slate-300", "dark:bg-slate-700");
-        schedulerKnob.classList.remove("translate-x-5");
-        schedulerKnob.classList.add("translate-x-0");
-      }
-
-      emailNotifyToggle.setAttribute("aria-checked", String(state.emailAlertsOn));
-      if (state.emailAlertsOn) {
-        emailNotifyToggle.classList.remove("bg-slate-300", "dark:bg-slate-700");
-        emailNotifyToggle.classList.add("bg-indigo-600");
-        emailNotifyKnob.classList.add("translate-x-5");
-        emailNotifyKnob.classList.remove("translate-x-0");
-      } else {
-        emailNotifyToggle.classList.remove("bg-indigo-600");
-        emailNotifyToggle.classList.add("bg-slate-300", "dark:bg-slate-700");
-        emailNotifyKnob.classList.remove("translate-x-5");
-        emailNotifyKnob.classList.add("translate-x-0");
-      }
-    }
-
-    function getCvName(cvId) {
-      const found = state.cvs.find((c) => c.id === cvId);
-      return found ? found.name : "Default_CV.pdf";
+    function switchTab(tab) {
+      panelRadar.classList.toggle("hidden", tab !== "radar");
+      panelCvs.classList.toggle("hidden", tab !== "cvs");
+      panelApplied.classList.toggle("hidden", tab !== "applied");
+      const activeCls = "px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm cursor-pointer";
+      const idleCls = "px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer";
+      tabRadarBtn.className = tab === "radar" ? activeCls : idleCls;
+      tabCvsBtn.className = tab === "cvs" ? activeCls : idleCls;
+      tabAppliedBtn.className = tab === "applied" ? activeCls : idleCls;
     }
 
     function buildPlatformLinks(role, region) {
@@ -709,268 +785,147 @@ jobs:
       const qLoc = encodeURIComponent(region === "Any" ? "" : region);
       const roleSlug = role.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const regionSlug = region.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const linkedinUrl = `https://www.linkedin.com/jobs/search/?keywords=${qRole}${qLoc ? "&location=" + qLoc : ""}`;
-      const naukriUrl = region === "Any"
-        ? `https://www.naukri.com/${roleSlug}-jobs`
-        : `https://www.naukri.com/${roleSlug}-jobs-in-${regionSlug}`;
-      const indeedUrl = `https://in.indeed.com/jobs?q=${qRole}${qLoc ? "&l=" + qLoc : ""}`;
-      const founditUrl = `https://www.foundit.in/srp/results?query=${qRole}${qLoc ? "&locations=" + qLoc : ""}`;
-      const wellfoundUrl = `https://wellfound.com/jobs?query=${qRole}`;
-      return { linkedinUrl, naukriUrl, indeedUrl, founditUrl, wellfoundUrl };
+      return {
+        linkedinUrl: `https://www.linkedin.com/jobs/search/?keywords=${qRole}${qLoc ? "&location=" + qLoc : ""}`,
+        naukriUrl: region === "Any" ? `https://www.naukri.com/${roleSlug}-jobs` : (region === "Remote" ? `https://www.naukri.com/${roleSlug}-jobs?wfhType=2` : `https://www.naukri.com/${roleSlug}-jobs-in-${regionSlug}`),
+        indeedUrl: `https://in.indeed.com/jobs?q=${qRole}${qLoc ? "&l=" + qLoc : ""}`,
+        founditUrl: `https://www.foundit.in/srp/results?query=${qRole}${qLoc ? "&locations=" + qLoc : ""}`,
+        wellfoundUrl: `https://wellfound.com/jobs?query=${qRole}`
+      };
     }
 
-    function renderCvsAndDropdown() {
-      cvList.innerHTML = state.cvs.map((cv) => `
-        <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 px-3 py-2">
-          <div class="min-w-0">
-            <div class="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">${cv.name}</div>
-            ${cv.skills ? `<div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">${cv.skills}</div>` : ""}
-          </div>
-          ${state.cvs.length > 1
-            ? `<button type="button" data-del-cv="${cv.id}" class="text-[11px] text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0">Remove</button>`
-            : ""}
-        </div>
-      `).join("");
-
-      ruleCvInput.innerHTML = state.cvs.map((cv) => `<option value="${cv.id}">${cv.name}</option>`).join("");
+    function getCvName(cvId) {
+      const found = state.cvs.find((c) => c.id === cvId);
+      return found ? found.name : "My_Resume.pdf";
     }
 
-    function renderRules() {
-      const activeCount = state.rules.filter((r) => r.active).length;
-      activeRulesCount.textContent = `${activeCount} active`;
-
-      if (state.rules.length === 0) {
-        rulesList.innerHTML = `
-          <div class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-3.5 text-center border border-dashed border-slate-200 dark:border-slate-800">
-            No role rules yet. Add a role, region, and CV below.
-          </div>
-        `;
-        return;
-      }
-
-      rulesList.innerHTML = state.rules.map((rule) => {
-        const links = buildPlatformLinks(rule.role, rule.region);
-        return `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border ${rule.active ? "border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-500/5" : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 opacity-60"} px-3.5 py-2.5">
-          <div class="min-w-0">
-            <div class="text-sm font-semibold text-slate-900 dark:text-white">${rule.role}</div>
-            <div class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Region: <strong class="text-slate-800 dark:text-slate-200">${rule.region}</strong> · CV: <span class="text-indigo-700 dark:text-indigo-300 font-medium">${getCvName(rule.cvId)}</span></div>
-            <div class="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
-              <span class="text-slate-400 dark:text-slate-500">Quick search:</span>
-              <a href="${links.linkedinUrl}" target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 hover:underline font-medium">LinkedIn ↗</a>
-              <a href="${links.naukriUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Naukri ↗</a>
-              <a href="${links.indeedUrl}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">Indeed ↗</a>
-              <a href="${links.founditUrl}" target="_blank" rel="noopener noreferrer" class="text-violet-600 dark:text-violet-400 hover:underline font-medium">Foundit ↗</a>
-              <a href="${links.wellfoundUrl}" target="_blank" rel="noopener noreferrer" class="text-amber-600 dark:text-amber-400 hover:underline font-medium">Wellfound ↗</a>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <button type="button" data-toggle-rule="${rule.id}" class="px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer ${rule.active ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20" : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}">
-              ${rule.active ? "Active" : "Paused"}
-            </button>
-            <button type="button" data-del-rule="${rule.id}" class="text-xs text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer">Delete</button>
-          </div>
-        </div>
-      `;
-      }).join("");
+    function formatTime(sec) {
+      return String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0");
     }
 
-    function render() {
-      renderCvsAndDropdown();
-      renderRules();
+    function startScheduler() {
+      if (timerHandle) clearInterval(timerHandle);
+      if (!state.schedulerOn) { countdownText.textContent = "Auto-Scan paused"; return; }
+      countdownText.textContent = "Next scan in " + formatTime(secondsLeft);
+      timerHandle = setInterval(() => {
+        if (!state.schedulerOn) return;
+        secondsLeft -= 1;
+        if (secondsLeft <= 0) { secondsLeft = state.intervalSec; checkForNewJobs(); }
+        countdownText.textContent = "Next scan in " + formatTime(secondsLeft);
+      }, 1000);
+    }
 
-      statScanned.textContent = state.scannedCount;
-      statMatched.textContent = state.matchedCount;
-      statApplied.textContent = state.applied.length;
-      statPortal.textContent = state.portalQueue.length;
-
-      if (state.portalQueue.length === 0) {
-        portalQueueList.innerHTML = `
-          <div class="md:col-span-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
-            No portal-only jobs waiting. When a company requires manual portal submission, its direct link will appear here.
-          </div>
-        `;
+    function updateEmailHint() {
+      const val = (state.notifyEmail || "").trim();
+      if (!val) {
+        emailValidityHint.textContent = "Add your email and tap Save Alert Settings.";
+        emailValidityHint.className = "text-[11px] mt-1 text-slate-400";
+      } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        emailValidityHint.textContent = "✓ Valid email — alerts logged in 🔔 Alerts & sent by cloud worker.";
+        emailValidityHint.className = "text-[11px] mt-1 text-emerald-500";
       } else {
-        portalQueueList.innerHTML = state.portalQueue.map((item) => `
-          <div class="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/5 p-4 flex flex-col justify-between gap-3">
-            <div>
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <div class="text-sm font-semibold text-slate-900 dark:text-white">${item.title}</div>
-                  <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${item.company} · ${item.region}</div>
-                </div>
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 shrink-0">Portal Only</span>
-              </div>
-              <div class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium mt-2">Recommended CV: ${item.cvName}</div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition">
-                Open Company Portal ↗
-              </a>
-              <button type="button" data-mark-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer">
-                Mark as Applied
-              </button>
-            </div>
-          </div>
-        `).join("");
+        emailValidityHint.textContent = "Enter a valid email address";
+        emailValidityHint.className = "text-[11px] mt-1 text-amber-500";
       }
+    }
 
-      if (state.feed.length === 0) {
-        jobFeedList.innerHTML = `
-          <div class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
-            Waiting for next fetch, or click <strong class="text-slate-700 dark:text-slate-200">Check for New Jobs</strong> above.
-          </div>
-        `;
-      } else {
-        jobFeedList.innerHTML = state.feed.map((job) => {
-          let badge = '<span class="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Skipped</span>';
-          if (job.matched && job.applyType === "portal") {
-            badge = '<span class="px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20">Portal Required</span>';
-          } else if (job.matched) {
-            badge = '<span class="px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20">Auto Match</span>';
-          }
-
-          const manualBtn = job.matched && !job.applied && job.applyType !== "portal"
-            ? `<button type="button" data-apply-id="${job.id}" class="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer">Apply manually (${job.cvName}) →</button>`
-            : "";
-          const linkHtml = job.url
-            ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline mt-1 inline-block">Direct link ↗</a>`
-            : "";
-          return `
-            <div class="rounded-xl border ${job.matched ? (job.applyType === "portal" ? "border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/5" : "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-500/5") : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60"} p-3.5">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="text-sm font-semibold text-slate-900 dark:text-white">${job.title}</div>
-                  <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${job.company} · ${job.region}</div>
-                  <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">${job.recruiter}${job.matched && job.matchScore ? ` · <span class=\"text-emerald-600 dark:text-emerald-400 font-semibold\">${job.matchScore}% Match</span>` : ""}</div>
-                  ${linkHtml}
-                </div>
-                ${badge}
-              </div>
-              ${manualBtn}
-            </div>
-          `;
-        }).join("");
-      }
-
-      const filteredApplied = state.applied.filter((app) => {
-        if (!appliedSearchTerm) return true;
-        const q = appliedSearchTerm.toLowerCase();
-        return app.title.toLowerCase().includes(q) ||
-          app.company.toLowerCase().includes(q) ||
-          app.cvName.toLowerCase().includes(q);
+    function addNotification(title, body, isAutoApplied) {
+      const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      state.notifications.unshift({
+        id: "notif-" + Date.now() + "-" + Math.random().toString(16).slice(2, 6),
+        title, body, to: (state.notifyEmail || "").trim() || "your account email", isAutoApplied, time
       });
-
-      if (filteredApplied.length === 0) {
-        appliedList.innerHTML = `
-          <div class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
-            ${state.applied.length === 0 ? "No applications sent yet. Matching jobs will appear here." : "No matching applied jobs for that filter."}
-          </div>
-        `;
-      } else {
-        appliedList.innerHTML = filteredApplied.map((app) => `
-          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 p-3.5 flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <div class="text-sm font-semibold text-slate-900 dark:text-white">${app.title}</div>
-              <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">${app.company} · ${app.region}</div>
-              <div class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium mt-1">CV Sent: ${app.cvName}</div>
-            </div>
-            <div class="text-right shrink-0">
-              <span class="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20">${app.method || "Auto"}</span>
-              <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">${app.time}</div>
-            </div>
-          </div>
-        `).join("");
-      }
-
-      if (state.emailOutbox.length === 0) {
-        emailOutboxList.innerHTML = `
-          <div class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">
-            Email alerts for auto-applied and portal-only jobs will appear here.
-          </div>
-        `;
-      } else {
-        emailOutboxList.innerHTML = state.emailOutbox.map((mail) => `
-          <div class="rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/40 dark:bg-indigo-500/5 p-3">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">To: ${mail.to}</span>
-              <span class="text-[11px] text-slate-400 dark:text-slate-500">${mail.time}</span>
-            </div>
-            <div class="text-xs font-semibold text-slate-900 dark:text-white mt-1">${mail.subject}</div>
-            <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">${mail.body}</div>
-          </div>
-        `).join("");
-      }
+      if (state.notifications.length > 25) state.notifications.pop();
     }
 
-    function queueEmailAlert(job, isPortal) {
-      if (!state.emailAlertsOn) return;
-      const recipient = state.notifyEmail.trim() || "your.email@example.com";
-      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      const modeTag = state.emailMode === "digest" ? "[Digest] " : "";
-      state.emailOutbox.unshift({
-        to: recipient,
-        subject: isPortal
-          ? `${modeTag}Portal Action Needed: ${job.title} at ${job.company}`
-          : `${modeTag}Applied: ${job.title} at ${job.company}`,
-        body: isPortal
-          ? `Manual portal required · Use CV: ${job.cvName} · Link: ${job.url}`
-          : `Region: ${job.region} · CV attached: ${job.cvName}`,
-        time: now
-      });
-      if (state.emailOutbox.length > 10) state.emailOutbox.pop();
+    function buildCoverNote(job) {
+      const applicant = (state.fullName || "").trim() || (currentUser ? currentUser : "Candidate");
+      const contactEmail = (state.notifyEmail || "").trim() || "your.email@gmail.com";
+      const cvObj = state.cvs.find((c) => c.name === job.cvName);
+      const skillsText = (cvObj && cvObj.skills) ? cvObj.skills : (job.skills || "relevant domain expertise");
+      const linkedin = (state.linkedinUrl || "").trim();
+      const portfolio = (state.portfolioUrl || "").trim();
+      const tpl = (state.coverLetterTemplate || "").trim() || DEFAULT_COVER_TEMPLATE;
+      let out = tpl
+        .replace(/\{\{company\}\}/gi, job.company || "Hiring")
+        .replace(/\{\{role\}\}/gi, job.title || "open")
+        .replace(/\{\{region\}\}/gi, job.region || "India")
+        .replace(/\{\{skills\}\}/gi, skillsText)
+        .replace(/\{\{name\}\}/gi, applicant)
+        .replace(/\{\{email\}\}/gi, contactEmail)
+        .replace(/\{\{linkedin\}\}/gi, linkedin)
+        .replace(/\{\{portfolio\}\}/gi, portfolio);
+      if (linkedin && !tpl.toLowerCase().includes("{{linkedin}}")) out += `\nLinkedIn: ${linkedin}`;
+      if (portfolio && !tpl.toLowerCase().includes("{{portfolio}}")) out += `\nPortfolio: ${portfolio}`;
+      return out;
+    }
+
+    function fallbackCopyText(text, label) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      ta.remove();
+      showToast(ok ? "Copied" : "Copy Ready", ok ? `${label} copied to clipboard.` : `${label} shown on card.`, ok);
+    }
+
+    function copyTextSafe(text, label) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast("Copied", `${label} copied to clipboard.`, true)).catch(() => fallbackCopyText(text, label));
+      } else {
+        fallbackCopyText(text, label);
+      }
     }
 
     function applyToJob(job, isAuto, methodLabel) {
       if (job.applied) return;
       job.applied = true;
-      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const coverNote = job.coverNote || buildCoverNote(job);
+      const targetInfo = job.applyEmail ? `Emailed ${job.applyEmail}` : (methodLabel || (isAuto ? "Auto-Applied" : "Manual"));
       state.applied.unshift({
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        region: job.region,
-        cvName: job.cvName,
-        method: methodLabel || (isAuto ? "Auto" : "Manual"),
-        time: now
+        id: job.id, title: job.title, company: job.company, region: job.region,
+        cvName: job.cvName, coverNote, method: targetInfo, status: "Applied", notes: "",
+        time, appliedAt: Date.now()
       });
-      if (methodLabel !== "Portal") {
-        queueEmailAlert(job, false);
+      if (state.emailAlertsOn) {
+        addNotification(isAuto ? `Auto-Applied: ${job.title}` : `Applied: ${job.title}`, `${job.company} (${job.region}) · CV: ${job.cvName}`, true);
       }
-      saveState();
-      showToast(isAuto ? "Auto-Applied + Email Queued" : "Marked as Applied", `${job.title} at ${job.company} (${job.cvName})`, true);
+      persistCurrentUser();
+      showToast(isAuto ? "Auto-Applied + Alert Sent" : "Application Logged", `${job.title} at ${job.company}`, true);
     }
 
     function queuePortalJob(job) {
-      state.portalQueue.unshift({
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        region: job.region,
-        cvName: job.cvName,
-        url: job.url
-      });
-      queueEmailAlert(job, true);
-      saveState();
-      showToast("Company Portal Required", `Direct link ready for ${job.title} at ${job.company}.`, false);
+      if (!state.portalQueue.some((p) => p.title === job.title && p.company === job.company)) {
+        state.portalQueue.unshift({
+          id: job.id, title: job.title, company: job.company, region: job.region,
+          salaryLpa: job.salaryLpa || 0, expLevel: job.expLevel || "",
+          missingSkills: job.missingSkills || [],
+          cvName: job.cvName, coverNote: job.coverNote || buildCoverNote(job), url: job.url
+        });
+      }
+      if (state.emailAlertsOn) {
+        addNotification(`Portal Link Ready: ${job.title}`, `${job.company} (${job.region}) · Use CV: ${job.cvName}`, false);
+      }
+      persistCurrentUser();
+      showToast("Company Portal Ready", `${job.title} at ${job.company} added to Portals tab.`, false);
     }
 
     function findMatchingRule(job) {
       const titleLower = job.title.toLowerCase();
-      const excludes = state.excludeKeywords
-        .split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean);
-      if (excludes.some((word) => titleLower.includes(word))) {
-        return null;
-      }
-
+      const excludes = (state.excludeKeywords || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+      if (excludes.some((w) => titleLower.includes(w))) return null;
       return state.rules.find((rule) => {
         if (!rule.active) return false;
-        const roleMatch = titleLower.includes(rule.role.trim().toLowerCase());
-        const regionMatch = rule.region === "Any" ||
-          job.region.toLowerCase().includes(rule.region.toLowerCase()) ||
-          (rule.region === "Remote" && job.region.toLowerCase().includes("worldwide"));
+        const words = rule.role.trim().toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+        const roleMatch = titleLower.includes(rule.role.trim().toLowerCase()) || (words.length >= 2 && words.filter((w) => titleLower.includes(w)).length >= 2);
+        const regLower = job.region.toLowerCase();
+        const regionMatch = rule.region === "Any" || regLower.includes(rule.region.toLowerCase()) || (rule.region === "Remote" && (regLower.includes("worldwide") || regLower.includes("india")));
         return roleMatch && regionMatch;
       });
     }
@@ -981,96 +936,161 @@ jobs:
       const jobText = `${job.title} ${job.skills || ""}`.toLowerCase();
       if (cvSkills.length === 0) return 85;
       const hits = cvSkills.filter((sk) => jobText.includes(sk)).length;
-      return Math.min(98, 70 + Math.round((hits / cvSkills.length) * 28));
+      return Math.min(98, 72 + Math.round((hits / cvSkills.length) * 26));
+    }
+
+    function getMissingSkills(job, cvId) {
+      const cv = state.cvs.find((c) => c.id === cvId);
+      const cvSkills = (cv && cv.skills ? cv.skills : "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+      const reqList = (job.skills || "").split(",").map((x) => x.trim()).filter(Boolean);
+      const detectedFromTitle = extractSkillsFromText(`${job.title} ${job.skills || ""}`);
+      const combined = [...new Set([...reqList, ...detectedFromTitle])];
+      return combined.filter((req) => !cvSkills.some((cs) => cs === req.toLowerCase() || req.toLowerCase().includes(cs))).slice(0, 5);
+    }
+
+    function checkSalaryAndExp(template) {
+      const minSal = Number(state.minSalaryLpa || 0);
+      const reqExp = state.experienceLevel || "Any";
+      if (minSal > 0 && template.salaryLpa && template.salaryLpa < minSal) {
+        return { ok: false, reason: `Below ₹${minSal} LPA` };
+      }
+      if (reqExp !== "Any" && template.expLevel && template.expLevel !== reqExp) {
+        return { ok: false, reason: `Exp ${template.expLevel} yrs` };
+      }
+      return { ok: true, reason: "" };
     }
 
     function processIncomingBatch(batch) {
       batch.forEach((template) => {
         state.scannedCount += 1;
         const matchedRule = findMatchingRule(template);
-        const cvName = matchedRule ? getCvName(matchedRule.cvId) : "";
-        const matchScore = matchedRule ? computeMatchScore(template, matchedRule.cvId) : 0;
+        const salExp = checkSalaryAndExp(template);
+        const isQualifiedMatch = Boolean(matchedRule) && salExp.ok;
+        const cvName = isQualifiedMatch ? getCvName(matchedRule.cvId) : "";
+        const matchScore = isQualifiedMatch ? computeMatchScore(template, matchedRule.cvId) : 0;
+        const missingSkills = isQualifiedMatch ? getMissingSkills(template, matchedRule.cvId) : [];
+        const fallbackLinks = buildPlatformLinks(template.title, template.region);
+        const resolvedUrl = template.url || (template.region === "Remote" ? fallbackLinks.indeedUrl : fallbackLinks.naukriUrl);
+        const minReq = state.minMatchScore || 75;
+        const passedScore = isQualifiedMatch && matchScore >= minReq;
         const job = {
           id: "job-" + Date.now() + "-" + state.scannedCount,
-          title: template.title,
-          skills: template.skills || "",
-          company: template.company,
-          recruiter: template.recruiter,
-          region: template.region,
-          applyType: template.applyType || "auto",
-          url: template.url || "",
-          matched: Boolean(matchedRule),
-          matchScore: matchScore,
-          cvName: cvName,
-          applied: false
+          title: template.title, company: template.company, region: template.region,
+          salaryLpa: template.salaryLpa || 0, expLevel: template.expLevel || "",
+          missingSkills, skipReason: matchedRule && !salExp.ok ? salExp.reason : "",
+          applyType: template.applyType || "auto", applyEmail: template.applyEmail || "",
+          url: resolvedUrl, matched: isQualifiedMatch, passedScore, matchScore, cvName, applied: false
         };
-
+        if (isQualifiedMatch) job.coverNote = buildCoverNote(job);
         state.feed.unshift(job);
         if (state.feed.length > 8) state.feed.pop();
 
-        if (matchedRule) {
+        if (isQualifiedMatch) {
           state.matchedCount += 1;
-          if (job.applyType === "portal") {
+          if (!passedScore) {
+            addNotification(`Below ${minReq}% Threshold: ${job.title}`, `${job.company} scored ${matchScore}% (skipped auto-apply).`, false);
+          } else if (job.applyType === "portal") {
             queuePortalJob(job);
+          } else if (state.autoApply && state.applied.length < (state.maxDailyApplies || 15)) {
+            applyToJob(job, true, "Auto-Applied");
           } else if (state.autoApply) {
-            applyToJob(job, true, "Auto");
+            addNotification(`Daily Cap Reached (${state.maxDailyApplies || 15})`, `${job.title} at ${job.company} saved for manual review.`, false);
           } else {
-            showToast("New Job Match!", `${job.title} at ${job.company} (${job.region})`, false);
+            addNotification(`New Match: ${job.title}`, `${job.company} (${job.region})`, false);
+            showToast("New Job Match", `${job.title} at ${job.company}`, false);
           }
         }
       });
-      saveState();
+      persistCurrentUser();
       render();
     }
 
-    async function checkForNewJobs() {
-      if (state.feedSource === "remotive") {
-        setFeedStatus("Fetching live jobs from Remotive public API...", false);
-        try {
-          const res = await fetch("https://remotive.com/api/remote-jobs?limit=6");
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const data = await res.json();
-          const liveJobs = (data.jobs || []).slice(0, 3).map((j) => ({
-            title: j.title,
-            company: j.company_name,
-            recruiter: "Live Remotive Listing",
-            region: j.candidate_required_location || "Remote",
-            applyType: "portal",
-            url: j.url || ""
-          }));
-          if (liveJobs.length === 0) throw new Error("No jobs returned");
-          setFeedStatus(`Fetched ${liveJobs.length} live jobs from Remotive.`, false);
-          processIncomingBatch(liveJobs);
-          return;
-        } catch (err) {
-          setFeedStatus("Remotive feed unavailable right now — fell back to simulated recruiter feed.", true);
+    async function fetchLiveJobs() {
+      const src = state.feedSource;
+      const activeRules = state.rules.filter((r) => r.active);
+      const primary = activeRules[0] || { role: "Software Engineer", region: "India" };
+      if (src === "adzuna") {
+        if (!state.adzunaAppId || !state.adzunaAppKey) {
+          throw new Error("Add your free Adzuna App ID & Key in Owner Setup (footer) to use Live India Feed.");
         }
-      } else if (state.feedSource === "arbeitnow") {
-        setFeedStatus("Fetching live jobs from Arbeitnow public API...", false);
-        try {
-          const res = await fetch("https://www.arbeitnow.com/api/job-board-api");
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const data = await res.json();
-          const liveJobs = (data.data || []).slice(0, 3).map((j) => ({
-            title: j.title,
-            company: j.company_name,
-            recruiter: "Live Arbeitnow Listing",
-            region: j.remote ? "Remote" : (j.location || "Europe"),
-            applyType: "portal",
-            url: j.url || ""
-          }));
-          if (liveJobs.length === 0) throw new Error("No jobs returned");
-          setFeedStatus(`Fetched ${liveJobs.length} live jobs from Arbeitnow.`, false);
-          processIncomingBatch(liveJobs);
-          return;
-        } catch (err) {
-          setFeedStatus("Arbeitnow feed unavailable right now — fell back to simulated recruiter feed.", true);
-        }
-      } else {
-        setFeedStatus("", false);
+        const where = primary.region === "Any" || primary.region === "Remote" ? "India" : primary.region;
+        const url = `https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${encodeURIComponent(state.adzunaAppId)}&app_key=${encodeURIComponent(state.adzunaAppKey)}&what=${encodeURIComponent(primary.role)}&where=${encodeURIComponent(where)}&results_per_page=8`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Adzuna API returned status " + res.status);
+        const data = await res.json();
+        return (data.results || []).slice(0, 5).map((j) => ({
+          title: j.title || primary.role,
+          skills: j.description ? j.description.slice(0, 120) : "",
+          company: (j.company && j.company.display_name) || "Company",
+          region: (j.location && j.location.display_name) || where,
+          applyType: "portal",
+          url: j.redirect_url || ""
+        }));
       }
+      if (src === "remotive") {
+        const res = await fetch(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(primary.role)}&limit=8`);
+        if (!res.ok) throw new Error("Remotive API returned status " + res.status);
+        const data = await res.json();
+        return (data.jobs || []).slice(0, 5).map((j) => ({
+          title: j.title || "Remote Role",
+          skills: (j.tags || []).join(", "),
+          company: j.company_name || "Company",
+          region: j.candidate_required_location || "Remote",
+          applyType: "portal",
+          url: j.url || ""
+        }));
+      }
+      if (src === "arbeitnow") {
+        const res = await fetch("https://www.arbeitnow.com/api/job-board-api");
+        if (!res.ok) throw new Error("Arbeitnow API returned status " + res.status);
+        const data = await res.json();
+        return (data.data || []).slice(0, 5).map((j) => ({
+          title: j.title || "Role",
+          skills: (j.tags || []).join(", "),
+          company: j.company_name || "Company",
+          region: j.remote ? "Remote" : (j.location || "Global"),
+          applyType: "portal",
+          url: j.url || ""
+        }));
+      }
+      return [];
+    }
 
+    async function checkForNewJobs() {
+      feedStatusMsg.classList.add("hidden");
+      if (state.feedSource !== "simulated") {
+        try {
+          const liveBatch = await fetchLiveJobs();
+          if (liveBatch.length > 0) {
+            processIncomingBatch(liveBatch);
+            return;
+          }
+          feedStatusMsg.textContent = "Live feed returned 0 listings for that query—showing sample matches.";
+          feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 bg-amber-500/10 text-amber-600 dark:text-amber-300";
+        } catch (err) {
+          feedStatusMsg.textContent = err.message + " Falling back to Smart India Demo Feed.";
+          feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 bg-amber-500/10 text-amber-600 dark:text-amber-300";
+        }
+      }
       const batch = [];
+      const activeRules = state.rules.filter((r) => r.active);
+      if (activeRules.length > 0) {
+        const pickedRule = activeRules[state.nextJobIndex % activeRules.length];
+        const isAutoTurn = state.nextJobIndex % 2 === 0;
+        const baseSkills = (state.cvs.find((c) => c.id === pickedRule.cvId)?.skills) || "";
+        const extraSkill = baseSkills.toLowerCase().includes("iso 27001") ? "GRC" : "ISO 27001, SQL";
+        batch.push({
+          title: pickedRule.role,
+          skills: baseSkills ? `${baseSkills}, ${extraSkill}` : "SQL, Analytics, Compliance",
+          salaryLpa: Math.max(12, Number(state.minSalaryLpa || 0) + 2),
+          expLevel: state.experienceLevel === "Any" ? "3-5" : state.experienceLevel,
+          company: isAutoTurn ? "PrimeHire India" : "GlobalVista Corp",
+          region: pickedRule.region === "Any" ? "Bengaluru" : pickedRule.region,
+          applyType: isAutoTurn ? "auto" : "portal",
+          applyEmail: isAutoTurn ? "hr@primehire.in" : "",
+          url: ""
+        });
+      }
       for (let i = 0; i < 2; i++) {
         batch.push(SAMPLE_JOBS[state.nextJobIndex % SAMPLE_JOBS.length]);
         state.nextJobIndex += 1;
@@ -1078,223 +1098,587 @@ jobs:
       processIncomingBatch(batch);
     }
 
-    themeToggleBtn.addEventListener("click", () => {
-      state.theme = state.theme === "light" ? "dark" : "light";
-      saveState();
-      applyTheme();
-    });
+    async function extractFileText(file) {
+      const lowerName = file.name.toLowerCase();
+      if (lowerName.endsWith(".pdf")) {
+        if (!window.pdfjsLib) return "";
+        try {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          const buf = await file.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+          let fullText = "";
+          const maxPages = Math.min(pdf.numPages, 6);
+          for (let p = 1; p <= maxPages; p++) {
+            const page = await pdf.getPage(p);
+            const content = await page.getTextContent();
+            fullText += " " + content.items.map((it) => it.str).join(" ");
+          }
+          return fullText.trim();
+        } catch (e) {
+          return "";
+        }
+      }
+      if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) {
+        return "";
+      }
+      return await file.text().catch(() => "");
+    }
 
-    openCloudModalBtn.addEventListener("click", () => {
-      cloudModal.classList.remove("hidden");
-    });
+    function render() {
+      const displayName = (state.fullName || "").trim() || (currentUser ? "@" + currentUser : "User");
+      const initial = (displayName.replace(/^@/, "")[0] || "U").toUpperCase();
+      userGreeting.textContent = "☰ " + displayName;
+      profileDrawerUsername.textContent = displayName;
+      profileDrawerStats.textContent = `${state.cvs.length} CV(s) · ${state.rules.filter((r) => r.active).length} Active Role(s)`;
+      profileFullName.value = state.fullName || "";
+      profileHeadline.value = state.headline || "";
+      profilePhone.value = state.phone || "";
+      profileLinkedIn.value = state.linkedinUrl || "";
+      profilePortfolio.value = state.portfolioUrl || "";
+      profileCoverTemplate.value = state.coverLetterTemplate || DEFAULT_COVER_TEMPLATE;
+      if (state.avatarDataUrl) {
+        navAvatarImg.src = state.avatarDataUrl; navAvatarImg.classList.remove("hidden"); navAvatarFallback.classList.add("hidden");
+        profileAvatarImg.src = state.avatarDataUrl; profileAvatarImg.classList.remove("hidden"); profileAvatarFallback.classList.add("hidden");
+      } else {
+        navAvatarImg.classList.add("hidden"); navAvatarFallback.classList.remove("hidden"); navAvatarFallback.textContent = initial;
+        profileAvatarImg.classList.add("hidden"); profileAvatarFallback.classList.remove("hidden"); profileAvatarFallback.textContent = initial;
+      }
 
-    closeCloudModalBtn.addEventListener("click", () => {
-      cloudModal.classList.add("hidden");
-    });
-
-    cloudModal.addEventListener("click", (e) => {
-      if (e.target === cloudModal) cloudModal.classList.add("hidden");
-    });
-
-    copyYamlBtn.addEventListener("click", () => {
-      copyText(workflowYaml.textContent, "GitHub Actions YAML");
-    });
-
-    copyRulesBtn.addEventListener("click", () => {
-      copyText(buildConfigJson(), "Config JSON");
-    });
-
-    downloadConfigBtn.addEventListener("click", () => {
-      downloadFile("config.json", buildConfigJson(), "application/json");
-      showToast("Downloaded config.json", "Upload this alongside job_watcher.py.", true);
-    });
-
-    quickDownloadConfigBtn.addEventListener("click", () => {
-      downloadFile("config.json", buildConfigJson(), "application/json");
-      showToast("Downloaded config.json", "Upload this alongside job_watcher.py.", true);
-    });
-
-    exportCsvBtn.addEventListener("click", exportAppliedCsv);
-
-    searchAppliedInput.addEventListener("input", (e) => {
-      appliedSearchTerm = e.target.value;
-      render();
-    });
-
-    autoApplyToggle.addEventListener("click", () => {
-      state.autoApply = !state.autoApply;
-      saveState();
-      updateToggleUI();
-    });
-
-    schedulerToggle.addEventListener("click", () => {
-      state.schedulerOn = !state.schedulerOn;
-      saveState();
-      updateToggleUI();
-      startScheduler();
-    });
-
-    emailNotifyToggle.addEventListener("click", () => {
-      state.emailAlertsOn = !state.emailAlertsOn;
-      saveState();
-      updateToggleUI();
-    });
-
-    notifyEmailInput.addEventListener("input", (e) => {
-      state.notifyEmail = e.target.value;
-      saveState();
+      intervalSelect.value = String(state.intervalSec);
+      feedSourceSelect.value = state.feedSource;
+      feedBadge.textContent = state.feedSource === "simulated" ? "Smart India Demo" : state.feedSource.toUpperCase();
+      notifyEmailInput.value = state.notifyEmail || "";
+      emailModeSelect.value = state.emailMode || "instant";
+      minMatchRange.value = String(state.minMatchScore || 75);
+      minMatchVal.textContent = `${minMatchRange.value}%`;
+      dailyCapInput.value = String(state.maxDailyApplies || 15);
+      minSalaryInput.value = String(state.minSalaryLpa || 0);
+      experienceSelect.value = state.experienceLevel || "Any";
+      excludeKeywordsInput.value = state.excludeKeywords || "";
+      adzunaIdInput.value = state.adzunaAppId || "";
+      adzunaKeyInput.value = state.adzunaAppKey || "";
+      readGmailAlertsCheck.checked = Boolean(state.readGmailAlerts);
       updateEmailHint();
+
+      autoApplyToggle.className = "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent " + (state.autoApply ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-700");
+      autoApplyKnob.className = "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition " + (state.autoApply ? "translate-x-5" : "translate-x-0");
+      statusBadge.textContent = state.autoApply ? "Auto-Apply ON" : "Notify Only";
+
+      schedulerToggle.className = "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent " + (state.schedulerOn ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700");
+      schedulerKnob.className = "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition " + (state.schedulerOn ? "translate-x-5" : "translate-x-0");
+
+      emailNotifyToggle.className = "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent " + (state.emailAlertsOn ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-700");
+      emailNotifyKnob.className = "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition " + (state.emailAlertsOn ? "translate-x-5" : "translate-x-0");
+
+      statScanned.textContent = state.scannedCount;
+      statMatched.textContent = state.matchedCount;
+      statApplied.textContent = state.applied.length;
+      statPortal.textContent = state.portalQueue.length;
+      notifCountBadge.textContent = state.notifications.length;
+
+      if (state.cvs.length === 0) {
+        cvList.innerHTML = `<div class="text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">No CV uploaded yet. Upload your CV above to start matching.</div>`;
+        ruleCvInput.innerHTML = `<option value="cv-default">My Resume</option>`;
+      } else {
+        cvList.innerHTML = state.cvs.map((cv) => `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 px-3 py-2.5 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-semibold text-slate-900 dark:text-white truncate">${escapeHtml(cv.name)} ${cv.uploadedSize ? `<span class="text-emerald-500">(${cv.uploadedSize} ✓)</span>` : ""}</div>
+                ${cv.skills ? `<div class="text-[11px] text-slate-500 truncate">${escapeHtml(cv.skills)}</div>` : ""}
+              </div>
+              <div class="flex items-center gap-2.5 shrink-0">
+                <button type="button" data-edit-cv="${cv.id}" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Edit</button>
+                <button type="button" data-del-cv="${cv.id}" class="text-xs text-slate-400 hover:text-rose-500 cursor-pointer">Remove</button>
+              </div>
+            </div>
+            <div id="editCvBox-${cv.id}" class="hidden flex gap-2 pt-1">
+              <input id="editCvInput-${cv.id}" type="text" value="${escapeHtml(cv.skills || "")}" placeholder="Comma-separated skills..." class="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-[11px] text-slate-900 dark:text-white" />
+              <button type="button" data-save-cv="${cv.id}" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold cursor-pointer">Save</button>
+            </div>
+          </div>`).join("");
+        ruleCvInput.innerHTML = state.cvs.map((cv) => `<option value="${cv.id}">${escapeHtml(cv.name)}</option>`).join("");
+      }
+
+      const activeRules = state.rules.filter((r) => r.active);
+      activeRulesCount.textContent = `${activeRules.length} active`;
+      const primary = activeRules[0] || { role: "Software Engineer", region: "Bengaluru" };
+      const pLinks = buildPlatformLinks(primary.role, primary.region);
+      topLinkLinkedin.href = pLinks.linkedinUrl;
+      topLinkNaukri.href = pLinks.naukriUrl;
+      topLinkIndeed.href = pLinks.indeedUrl;
+      topLinkFoundit.href = pLinks.founditUrl;
+      topLinkWellfound.href = pLinks.wellfoundUrl;
+
+      if (state.rules.length === 0) {
+        rulesList.innerHTML = `<div class="text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">No target roles set yet. Pick your own job role and city below to start matching.</div>`;
+      } else {
+        rulesList.innerHTML = state.rules.map((rule) => {
+          const links = buildPlatformLinks(rule.role, rule.region);
+          return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border ${rule.active ? "border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-500/5" : "border-slate-200 dark:border-slate-800 opacity-60"} px-3.5 py-2.5">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">${escapeHtml(rule.role)} <span class="text-xs font-normal text-slate-500">in ${escapeHtml(rule.region)}</span></div>
+              <div class="text-[11px] text-indigo-600 dark:text-indigo-300 mt-0.5">CV: ${escapeHtml(getCvName(rule.cvId))}</div>
+              <div class="flex flex-wrap gap-2.5 mt-1.5 text-[11px]">
+                <a href="${links.linkedinUrl}" target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 hover:underline font-medium">LinkedIn ↗</a>
+                <a href="${links.naukriUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Naukri ↗</a>
+                <a href="${links.indeedUrl}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">Indeed ↗</a>
+                <a href="${links.founditUrl}" target="_blank" rel="noopener noreferrer" class="text-violet-600 dark:text-violet-400 hover:underline font-medium">Foundit ↗</a>
+                <a href="${links.wellfoundUrl}" target="_blank" rel="noopener noreferrer" class="text-amber-600 dark:text-amber-400 hover:underline font-medium">Wellfound ↗</a>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" data-toggle-rule="${rule.id}" class="px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${rule.active ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}">${rule.active ? "Active" : "Paused"}</button>
+              <button type="button" data-del-rule="${rule.id}" class="text-xs text-slate-400 hover:text-rose-500 cursor-pointer">Delete</button>
+            </div>
+          </div>`;
+        }).join("");
+      }
+
+      jobFeedList.innerHTML = state.feed.length === 0
+        ? `<div class="md:col-span-2 text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-6 text-center border border-dashed border-slate-200 dark:border-slate-800">Add a target role above, then click <strong>Scan for Jobs</strong>.</div>`
+        : state.feed.map((job) => `
+          <div class="rounded-xl border ${job.matched ? (job.applyType === "portal" ? "border-amber-200 dark:border-amber-500/30 bg-amber-50/30 dark:bg-amber-500/5" : "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-500/5") : "border-slate-200 dark:border-slate-800"} p-3.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-slate-900 dark:text-white">${escapeHtml(job.title)}</div>
+                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(job.company)} · ${escapeHtml(job.region)}${job.salaryLpa ? ` · ₹${job.salaryLpa} LPA` : ""}${job.expLevel ? ` · ${escapeHtml(job.expLevel)} yrs` : ""}${job.matched ? ` · <span class="text-emerald-500 font-semibold">${job.matchScore}% Match</span>` : ""}</div>
+                ${job.matched && job.missingSkills && job.missingSkills.length ? `<div class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Missing skills: ${escapeHtml(job.missingSkills.join(", "))}</div>` : (job.matched ? `<div class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">✓ All listed skills covered</div>` : "")}
+                ${job.url ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-500 hover:underline mt-1 inline-block">Open link ↗</a>` : ""}
+              </div>
+              <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold shrink-0 ${job.matched ? (job.applyType === "portal" ? "bg-amber-500/15 text-amber-600 dark:text-amber-300" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300") : "bg-slate-100 dark:bg-slate-800 text-slate-500"}">${job.matched ? (job.applyType === "portal" ? "Portal" : (job.applied ? "Auto-Applied ✓" : "Match")) : escapeHtml(job.skipReason || "Skipped")}</span>
+            </div>
+          </div>`).join("");
+
+      portalQueueList.innerHTML = state.portalQueue.length === 0
+        ? `<div class="md:col-span-2 text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-5 text-center border border-dashed border-slate-200 dark:border-slate-800">No portal-only jobs waiting.</div>`
+        : state.portalQueue.map((item) => `
+          <div class="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/5 p-4 flex flex-col justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">${escapeHtml(item.title)}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.company)} · ${escapeHtml(item.region)}${item.salaryLpa ? ` · ₹${item.salaryLpa} LPA` : ""}${item.expLevel ? ` · ${escapeHtml(item.expLevel)} yrs` : ""}</div>
+              <div class="text-[11px] text-indigo-600 dark:text-indigo-300 font-medium mt-1.5">Recommended CV: ${escapeHtml(item.cvName)}</div>
+              ${item.missingSkills && item.missingSkills.length ? `<div class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Missing skills to highlight: ${escapeHtml(item.missingSkills.join(", "))}</div>` : ""}
+              ${item.coverNote ? `<p class="whitespace-pre-line text-[11px] text-slate-600 dark:text-slate-400 mt-2 bg-white/70 dark:bg-slate-900/70 rounded-lg p-2.5 border border-slate-200/70 dark:border-slate-800 leading-relaxed">${escapeHtml(item.coverNote)}</p>` : ""}
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold">Open Portal ↗</a>
+              <button type="button" data-copy-portal-url="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Link</button>
+              <button type="button" data-copy-portal-note="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Note</button>
+              <button type="button" data-mark-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold cursor-pointer">Mark Applied</button>
+            </div>
+          </div>`).join("");
+
+      const filtered = state.applied.filter((a) => !appliedSearchTerm || `${a.title} ${a.company} ${a.cvName}`.toLowerCase().includes(appliedSearchTerm.toLowerCase()));
+      appliedList.innerHTML = filtered.length === 0
+        ? `<div class="md:col-span-2 text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-5 text-center border border-dashed border-slate-200 dark:border-slate-800">No applications logged yet.</div>`
+        : filtered.map((app) => {
+          const daysOld = Math.floor((Date.now() - (app.appliedAt || Date.now())) / 86400000);
+          const followText = daysOld >= 7 ? "Follow up now!" : `Follow-up in ${7 - daysOld}d`;
+          const curStatus = app.status || "Applied";
+          return `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 space-y-2.5">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-slate-900 dark:text-white truncate">${escapeHtml(app.title)}</div>
+                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(app.company)} · ${escapeHtml(app.region)}</div>
+                <div class="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1">CV: ${escapeHtml(app.cvName)}</div>
+              </div>
+              <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">${escapeHtml(app.method)}</span>
+                <div class="text-[11px] ${daysOld >= 7 ? "text-amber-500 font-semibold" : "text-slate-400"}">${app.time} · ${followText}</div>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <select data-status-applied="${app.id}" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2 py-1 text-[11px] font-semibold text-slate-800 dark:text-slate-200">
+                <option value="Applied" ${curStatus === "Applied" ? "selected" : ""}>Applied</option>
+                <option value="Shortlisted" ${curStatus === "Shortlisted" ? "selected" : ""}>Shortlisted</option>
+                <option value="Interview" ${curStatus === "Interview" ? "selected" : ""}>Interview</option>
+                <option value="Offer" ${curStatus === "Offer" ? "selected" : ""}>Offer</option>
+                <option value="Rejected" ${curStatus === "Rejected" ? "selected" : ""}>Rejected</option>
+              </select>
+              <input data-note-applied="${app.id}" type="text" value="${escapeHtml(app.notes || "")}" placeholder="Add interview date or HR notes..." class="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-1 text-[11px] text-slate-900 dark:text-white" />
+              ${app.coverNote ? `<button type="button" data-copy-applied-note="${app.id}" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold cursor-pointer">Copy Note</button>` : ""}
+            </div>
+          </div>`;
+        }).join("");
+
+      notifList.innerHTML = state.notifications.length === 0
+        ? `<div class="text-xs text-slate-500 text-center py-8">No notifications yet.</div>`
+        : state.notifications.map((n) => `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-semibold ${n.isAutoApplied ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}">To: ${escapeHtml(n.to)}</span>
+              <span class="text-[11px] text-slate-400">${n.time}</span>
+            </div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white mt-1">${escapeHtml(n.title)}</div>
+            <div class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">${escapeHtml(n.body)}</div>
+          </div>`).join("");
+    }
+
+    showLoginTabBtn.addEventListener("click", () => switchAuthTab("login"));
+    showSignupTabBtn.addEventListener("click", () => switchAuthTab("signup"));
+    authThemeBtn.addEventListener("click", () => { state.theme = state.theme === "light" ? "dark" : "light"; applyTheme(); });
+    themeToggleBtn.addEventListener("click", () => { state.theme = state.theme === "light" ? "dark" : "light"; persistCurrentUser(); applyTheme(); });
+
+    signupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const user = signupUsername.value.trim().toLowerCase();
+      const email = signupEmail.value.trim();
+      const pass = signupPassword.value;
+      const accounts = loadAccounts();
+      if (accounts[user]) { showToast("Username Taken", "Please pick another username or log in.", false); return; }
+      accounts[user] = { password: pass, data: defaultUserData(email, false) };
+      saveAccounts(accounts);
+      enterApp(user);
+      showToast("Account Created ✓", "Upload your CV and add your first target job role.", true);
     });
 
-    emailModeSelect.addEventListener("change", (e) => {
-      state.emailMode = e.target.value;
-      saveState();
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const user = loginUsername.value.trim().toLowerCase();
+      const pass = loginPassword.value;
+      const accounts = loadAccounts();
+      if (!accounts[user] || accounts[user].password !== pass) { showToast("Login Failed", "Check your username and password.", false); return; }
+      enterApp(user);
     });
 
-    excludeKeywordsInput.addEventListener("input", (e) => {
-      state.excludeKeywords = e.target.value;
-      saveState();
+    demoGuestBtn.addEventListener("click", () => {
+      const accounts = loadAccounts();
+      if (!accounts.demo) {
+        accounts.demo = { password: "demo", data: defaultUserData("demo@careerrelay.app", true) };
+        saveAccounts(accounts);
+      }
+      enterApp("demo");
+      showToast("Sample Demo Active", "Signed in as @demo.", true);
     });
 
-    companyBoardsInput.addEventListener("input", (e) => {
-      state.companyBoards = e.target.value;
-      saveState();
+    logoutBtn.addEventListener("click", () => {
+      if (timerHandle) clearInterval(timerHandle);
+      currentUser = null;
+      try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+      appScreen.classList.add("hidden");
+      authScreen.classList.remove("hidden");
     });
 
-    intervalSelect.addEventListener("change", (e) => {
-      state.intervalSec = Number(e.target.value);
-      state.secondsLeft = state.intervalSec;
-      saveState();
-      startScheduler();
+    openProfileDrawerBtn.addEventListener("click", () => profileDrawer.classList.remove("hidden"));
+    closeProfileDrawerBtn.addEventListener("click", () => profileDrawer.classList.add("hidden"));
+    profileDrawer.addEventListener("click", (e) => { if (e.target === profileDrawer) profileDrawer.classList.add("hidden"); });
+    drawerLogoutBtn.addEventListener("click", () => { profileDrawer.classList.add("hidden"); logoutBtn.click(); });
+
+    changePhotoBtn.addEventListener("click", () => profilePhotoInput.click());
+    profilePhotoInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.avatarDataUrl = typeof reader.result === "string" ? reader.result : "";
+        persistCurrentUser(); render();
+        showToast("Photo Saved ✓", "Your profile picture has been updated.", true);
+      };
+      reader.readAsDataURL(file);
     });
 
-    feedSourceSelect.addEventListener("change", (e) => {
-      state.feedSource = e.target.value;
-      saveState();
-      updateToggleUI();
+    resetCoverTemplateBtn.addEventListener("click", () => {
+      profileCoverTemplate.value = DEFAULT_COVER_TEMPLATE;
+      showToast("Default Template Restored", "Tap Save Profile to keep this wording.", true);
     });
 
-    checkJobsBtn.addEventListener("click", () => {
-      state.secondsLeft = state.intervalSec;
-      checkForNewJobs();
-      updateCountdownUI();
+    profileForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      state.fullName = profileFullName.value.trim();
+      state.headline = profileHeadline.value.trim();
+      state.phone = profilePhone.value.trim();
+      state.linkedinUrl = profileLinkedIn.value.trim();
+      state.portfolioUrl = profilePortfolio.value.trim();
+      state.coverLetterTemplate = profileCoverTemplate.value.trim() || DEFAULT_COVER_TEMPLATE;
+      persistCurrentUser(); render();
+      profileDrawer.classList.add("hidden");
+      showToast("Profile Saved ✓", "Your profile, links, and cover letter template are saved.", true);
     });
 
-    clearPortalBtn.addEventListener("click", () => {
-      state.portalQueue = [];
-      saveState();
-      render();
-    });
+    tabRadarBtn.addEventListener("click", () => switchTab("radar"));
+    tabCvsBtn.addEventListener("click", () => switchTab("cvs"));
+    tabAppliedBtn.addEventListener("click", () => switchTab("applied"));
 
-    clearLogBtn.addEventListener("click", () => {
-      state.applied = [];
-      saveState();
-      render();
-    });
+    openNotifBtn.addEventListener("click", () => notifDrawer.classList.remove("hidden"));
+    closeNotifDrawerBtn.addEventListener("click", () => notifDrawer.classList.add("hidden"));
+    notifDrawer.addEventListener("click", (e) => { if (e.target === notifDrawer) notifDrawer.classList.add("hidden"); });
+    recheckFromNotifBtn.addEventListener("click", () => { notifDrawer.classList.add("hidden"); checkForNewJobs(); });
+    clearNotifBtn.addEventListener("click", () => { state.notifications = []; persistCurrentUser(); render(); });
 
-    clearEmailBtn.addEventListener("click", () => {
-      state.emailOutbox = [];
-      saveState();
-      render();
+    checkJobsBtn.addEventListener("click", () => { secondsLeft = state.intervalSec; checkForNewJobs(); });
+    schedulerToggle.addEventListener("click", () => { state.schedulerOn = !state.schedulerOn; persistCurrentUser(); render(); startScheduler(); });
+    autoApplyToggle.addEventListener("click", () => { state.autoApply = !state.autoApply; persistCurrentUser(); render(); });
+    intervalSelect.addEventListener("change", (e) => { state.intervalSec = Number(e.target.value); secondsLeft = state.intervalSec; persistCurrentUser(); startScheduler(); });
+    feedSourceSelect.addEventListener("change", (e) => { state.feedSource = e.target.value; persistCurrentUser(); render(); });
+
+    uploadCvBtn.addEventListener("click", () => cvFilePicker.click());
+    cvFilePicker.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const text = await extractFileText(file);
+      const detected = extractSkillsFromText(text);
+      const manualSkills = newCvSkills.value.trim();
+      const skills = manualSkills || (detected.length ? detected.join(", ") : "No selectable text found — add skills manually");
+      const sizeKb = Math.max(1, Math.round(file.size / 1024));
+      state.cvs.push({ id: "cv-" + Date.now(), name: file.name, skills, uploadedSize: `${sizeKb} KB` });
+      newCvSkills.value = ""; cvFilePicker.value = "";
+      persistCurrentUser(); render();
+      if (!manualSkills && detected.length === 0) {
+        showToast("CV Saved (Add Skills)", `${file.name} had no readable text (e.g. scanned PDF or DOCX). Type key skills below.`, false);
+      } else {
+        showToast("CV Uploaded ✓", `${file.name} (${sizeKb} KB) — detected ${manualSkills ? "custom" : detected.length} skill(s).`, true);
+      }
     });
 
     addCvForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const name = newCvName.value.trim();
       if (!name) return;
-      const skills = newCvSkills.value.trim();
-      state.cvs.push({ id: "cv-" + Date.now(), name, skills });
-      newCvName.value = "";
-      newCvSkills.value = "";
-      saveState();
-      render();
-    });
-
-    cvFilePicker.addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      state.cvs.push({ id: "cv-" + Date.now(), name: file.name });
-      cvFilePicker.value = "";
-      saveState();
-      render();
+      state.cvs.push({ id: "cv-" + Date.now(), name, skills: newCvSkills.value.trim() });
+      newCvName.value = ""; newCvSkills.value = "";
+      persistCurrentUser(); render();
+      showToast("CV Saved ✓", `${name} added to your CVs.`, true);
     });
 
     cvList.addEventListener("click", (e) => {
+      const editBtn = e.target.closest("[data-edit-cv]");
+      if (editBtn) {
+        const box = document.getElementById("editCvBox-" + editBtn.getAttribute("data-edit-cv"));
+        if (box) box.classList.toggle("hidden");
+        return;
+      }
+      const saveBtn = e.target.closest("[data-save-cv]");
+      if (saveBtn) {
+        const id = saveBtn.getAttribute("data-save-cv");
+        const inp = document.getElementById("editCvInput-" + id);
+        const cv = state.cvs.find((c) => c.id === id);
+        if (cv && inp) {
+          cv.skills = inp.value.trim();
+          persistCurrentUser(); render();
+          showToast("CV Skills Updated ✓", `Saved skills for ${cv.name}.`, true);
+        }
+        return;
+      }
       const btn = e.target.closest("[data-del-cv]");
-      if (!btn || state.cvs.length <= 1) return;
+      if (!btn) return;
       const id = btn.getAttribute("data-del-cv");
       state.cvs = state.cvs.filter((c) => c.id !== id);
-      const fallbackId = state.cvs[0].id;
-      state.rules.forEach((r) => {
-        if (r.cvId === id) r.cvId = fallbackId;
-      });
-      saveState();
-      render();
+      if (state.cvs.length > 0) {
+        const fallback = state.cvs[0].id;
+        state.rules.forEach((r) => { if (r.cvId === id) r.cvId = fallback; });
+      }
+      persistCurrentUser(); render();
     });
 
     addRuleForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const role = ruleRoleInput.value.trim();
-      if (!role) return;
-      state.rules.push({
-        id: "rule-" + Date.now(),
-        role,
-        region: ruleRegionInput.value,
-        cvId: ruleCvInput.value,
-        active: true
-      });
+      if (!role) { showToast("Enter a Job Role", "Pick or type a role first.", false); return; }
+      if (state.cvs.length === 0) state.cvs.push({ id: "cv-default", name: "My_Resume.pdf", skills: role });
+      const cvId = ruleCvInput.value || state.cvs[0].id;
+      state.rules.push({ id: "rule-" + Date.now(), role, region: ruleRegionInput.value, cvId, active: true });
       ruleRoleInput.value = "";
-      saveState();
-      render();
+      persistCurrentUser(); render();
+      showToast("Role Saved ✓", `Watching ${role} in ${ruleRegionInput.value}.`, true);
     });
 
     rulesList.addEventListener("click", (e) => {
-      const toggleBtn = e.target.closest("[data-toggle-rule]");
-      if (toggleBtn) {
-        const id = toggleBtn.getAttribute("data-toggle-rule");
-        const rule = state.rules.find((r) => r.id === id);
-        if (rule) rule.active = !rule.active;
-        saveState();
-        render();
+      const t = e.target.closest("[data-toggle-rule]");
+      if (t) {
+        const r = state.rules.find((x) => x.id === t.getAttribute("data-toggle-rule"));
+        if (r) { r.active = !r.active; persistCurrentUser(); render(); }
         return;
       }
-      const delBtn = e.target.closest("[data-del-rule]");
-      if (delBtn) {
-        const id = delBtn.getAttribute("data-del-rule");
-        state.rules = state.rules.filter((r) => r.id !== id);
-        saveState();
-        render();
+      const d = e.target.closest("[data-del-rule]");
+      if (d) {
+        state.rules = state.rules.filter((x) => x.id !== d.getAttribute("data-del-rule"));
+        persistCurrentUser(); render();
+      }
+    });
+
+    emailNotifyToggle.addEventListener("click", () => { state.emailAlertsOn = !state.emailAlertsOn; persistCurrentUser(); render(); });
+    minMatchRange.addEventListener("input", () => { minMatchVal.textContent = `${minMatchRange.value}%`; });
+
+    saveAlertPrefsBtn.addEventListener("click", () => {
+      state.notifyEmail = notifyEmailInput.value.trim();
+      state.emailMode = emailModeSelect.value;
+      state.minMatchScore = Number(minMatchRange.value) || 75;
+      state.maxDailyApplies = Math.max(1, Number(dailyCapInput.value) || 15);
+      state.minSalaryLpa = Math.max(0, Number(minSalaryInput.value) || 0);
+      state.experienceLevel = experienceSelect.value || "Any";
+      state.excludeKeywords = excludeKeywordsInput.value.trim();
+      persistCurrentUser(); render();
+      showToast("Settings Saved ✓", `Cap: ${state.maxDailyApplies}/day · Min Salary: ${state.minSalaryLpa ? "₹" + state.minSalaryLpa + " LPA" : "Any"}`, true);
+    });
+
+    sendTestAlertBtn.addEventListener("click", () => {
+      state.notifyEmail = notifyEmailInput.value.trim();
+      addNotification("Test Alert Confirmed", `Alerts are active for ${state.notifyEmail || "your account"}.`, true);
+      persistCurrentUser(); render();
+      showToast("Test Alert Logged ✓", "Check the 🔔 Alerts drawer at the top right.", true);
+    });
+
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest("a[target='_blank']");
+      if (!link) return;
+      const href = link.getAttribute("href");
+      if (!href || href === "#") {
+        e.preventDefault();
+        showToast("No Link Available", "Scan a job or add a target role first.", false);
+        return;
+      }
+      e.preventDefault();
+      const win = window.open(href, "_blank", "noopener,noreferrer");
+      if (!win) {
+        copyTextSafe(href, "Portal link (paste in browser)");
       }
     });
 
     portalQueueList.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-mark-portal]");
-      if (!btn) return;
-      const id = btn.getAttribute("data-mark-portal");
-      const item = state.portalQueue.find((p) => p.id === id);
-      if (item) {
-        state.portalQueue = state.portalQueue.filter((p) => p.id !== id);
-        applyToJob({ ...item, applied: false }, false, "Portal");
-        render();
+      const copyUrlBtn = e.target.closest("[data-copy-portal-url]");
+      if (copyUrlBtn) {
+        const item = state.portalQueue.find((p) => p.id === copyUrlBtn.getAttribute("data-copy-portal-url"));
+        if (item && item.url) copyTextSafe(item.url, "Portal link");
+        return;
+      }
+      const copyBtn = e.target.closest("[data-copy-portal-note]");
+      if (copyBtn) {
+        const item = state.portalQueue.find((p) => p.id === copyBtn.getAttribute("data-copy-portal-note"));
+        if (item) copyTextSafe(item.coverNote || buildCoverNote(item), "Cover letter");
+        return;
+      }
+      const markBtn = e.target.closest("[data-mark-portal]");
+      if (markBtn) {
+        const idx = state.portalQueue.findIndex((p) => p.id === markBtn.getAttribute("data-mark-portal"));
+        if (idx !== -1) {
+          const item = state.portalQueue.splice(idx, 1)[0];
+          applyToJob(item, false, "Portal Applied");
+          render();
+        }
       }
     });
 
-    jobFeedList.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-apply-id]");
-      if (!btn) return;
-      const id = btn.getAttribute("data-apply-id");
-      const job = state.feed.find((j) => j.id === id);
-      if (job) {
-        applyToJob(job, false, "Manual");
-        render();
+    appliedList.addEventListener("click", (e) => {
+      const copyBtn = e.target.closest("[data-copy-applied-note]");
+      if (copyBtn) {
+        const item = state.applied.find((a) => a.id === copyBtn.getAttribute("data-copy-applied-note"));
+        if (item) copyTextSafe(item.coverNote || buildCoverNote(item), "Cover letter");
       }
     });
 
-    applyTheme();
-    updateToggleUI();
-    updateEmailHint();
-    render();
-    startScheduler();
+    appliedList.addEventListener("change", (e) => {
+      const sel = e.target.closest("[data-status-applied]");
+      if (sel) {
+        const item = state.applied.find((a) => a.id === sel.getAttribute("data-status-applied"));
+        if (item) {
+          item.status = sel.value;
+          persistCurrentUser();
+          showToast("Status Updated ✓", `${item.title} marked as ${item.status}.`, true);
+        }
+      }
+    });
+
+    appliedList.addEventListener("input", (e) => {
+      const inp = e.target.closest("[data-note-applied]");
+      if (inp) {
+        const item = state.applied.find((a) => a.id === inp.getAttribute("data-note-applied"));
+        if (item) {
+          item.notes = inp.value;
+          persistCurrentUser();
+        }
+      }
+    });
+
+    searchAppliedInput.addEventListener("input", (e) => { appliedSearchTerm = e.target.value; render(); });
+    clearPortalBtn.addEventListener("click", () => { state.portalQueue = []; persistCurrentUser(); render(); });
+    clearLogBtn.addEventListener("click", () => { state.applied = []; persistCurrentUser(); render(); });
+
+    exportCsvBtn.addEventListener("click", () => {
+      if (state.applied.length === 0) { showToast("Nothing to Export", "Apply to a job first.", false); return; }
+      const rows = [["Title", "Company", "Region", "CV", "Method", "Status", "Notes", "Time"]].concat(
+        state.applied.map((a) => [a.title, a.company, a.region, a.cvName, a.method, a.status || "Applied", a.notes || "", a.time])
+      );
+      const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "careerrelay_applied.csv";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast("CSV Exported ✓", "Downloaded careerrelay_applied.csv.", true);
+    });
+
+    resetDemoBtn.addEventListener("click", () => {
+      state = defaultUserData(state.notifyEmail, currentUser === "demo");
+      persistCurrentUser(); render();
+      showToast("Data Reset ✓", "Your workspace has been cleared.", true);
+    });
+
+    openOwnerModalBtn.addEventListener("click", () => ownerModal.classList.remove("hidden"));
+    closeOwnerModalBtn.addEventListener("click", () => ownerModal.classList.add("hidden"));
+    ownerModal.addEventListener("click", (e) => { if (e.target === ownerModal) ownerModal.classList.add("hidden"); });
+
+    saveOwnerKeysBtn.addEventListener("click", () => {
+      state.adzunaAppId = adzunaIdInput.value.trim();
+      state.adzunaAppKey = adzunaKeyInput.value.trim();
+      state.readGmailAlerts = readGmailAlertsCheck.checked;
+      persistCurrentUser();
+      ownerModal.classList.add("hidden");
+      showToast("Owner Keys Saved ✓", "Your Adzuna & Gmail settings are saved.", true);
+    });
+
+    downloadConfigBtn.addEventListener("click", () => {
+      state.adzunaAppId = adzunaIdInput.value.trim();
+      state.adzunaAppKey = adzunaKeyInput.value.trim();
+      state.readGmailAlerts = readGmailAlertsCheck.checked;
+      persistCurrentUser();
+      const cfg = {
+        sender_email: state.notifyEmail || "your.email@gmail.com",
+        recipient_email: state.notifyEmail || "your.email@gmail.com",
+        applicant_name: state.fullName || "Candidate",
+        linkedin_url: state.linkedinUrl || "",
+        portfolio_url: state.portfolioUrl || "",
+        cover_letter_template: state.coverLetterTemplate || DEFAULT_COVER_TEMPLATE,
+        check_interval_seconds: state.intervalSec || 3600,
+        email_mode: state.emailMode || "instant",
+        max_daily_applies: state.maxDailyApplies || 15,
+        min_salary_lpa: state.minSalaryLpa || 0,
+        experience_level: state.experienceLevel || "Any",
+        read_gmail_alerts: Boolean(state.readGmailAlerts),
+        exclude_keywords: (state.excludeKeywords || "").split(",").map((x) => x.trim()).filter(Boolean),
+        greenhouse_boards: [],
+        lever_companies: [],
+        ashby_companies: [],
+        rules: state.rules.filter((r) => r.active).map((r) => ({
+          role: r.role,
+          region: r.region,
+          cv_file: getCvName(r.cvId)
+        }))
+      };
+      const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "config.json";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast("config.json Downloaded ✓", "Upload this to your careerrelay-bot repo.", true);
+    });
+
+    (function init() {
+      applyTheme();
+      if ("serviceWorker" in navigator && location.protocol === "https:") {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      }
+      try {
+        const saved = localStorage.getItem(SESSION_KEY);
+        const accounts = loadAccounts();
+        if (saved && accounts[saved]) {
+          enterApp(saved);
+          return;
+        }
+      } catch (e) {}
+    })();
   </script>
 </body>
 </html>
