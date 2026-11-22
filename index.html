@@ -494,6 +494,7 @@
   <script>
     const ACCOUNTS_KEY = "careerrelay_accounts_v2";
     const SESSION_KEY = "careerrelay_session_v2";
+    const ADMIN_EMAIL = "fearless.soul.kng@gmail.com";
     const SUPABASE_URL = "https://bfgtnvlmzzcndwbuxzon.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_IAJVkmoqNP9ljsQ6WwPE4A_OUiD1PCZ";
     const sb = (window.supabase && window.supabase.createClient)
@@ -512,64 +513,89 @@
     ];
 
     const KNOWN_SKILLS = [
-      // Tech & Cloud
+      // Legal, Privacy, Contracts & GRC
+      "DPDP", "DPDP Act", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "PIPEDA", "PDPA",
+      "DPIA", "PIA", "RoPA", "DSAR", "DPA", "TIA", "Privacy by Design", "Privacy Notice",
+      "Cookie Consent", "Data Protection", "Data Privacy", "Data Governance", "Data Mapping",
+      "Incident Response", "Breach Management", "OneTrust", "TrustArc", "Securiti", "BigID",
+      "ISO 27001", "ISO 27701", "SOC 2", "NIST", "PCI-DSS", "SOX", "FCPA", "AML", "KYC",
+      "GRC", "Regulatory Compliance", "Compliance", "Risk Assessment", "Risk Management",
+      "Vendor Risk", "Third-Party Risk", "TPRM", "Internal Audit", "Information Security",
+      "Cybersecurity", "Contract Drafting", "Contract Review", "Contract Negotiation",
+      "Redlining", "MSA", "NDA", "SLA", "SOW", "CLM", "Contract Lifecycle Management",
+      "Ironclad", "Icertis", "DocuSign", "Corporate Law", "Commercial Contracts", "M&A",
+      "Due Diligence", "Intellectual Property", "Trademarks", "Copyright", "Patents",
+      "Litigation", "Litigation Support", "eDiscovery", "Paralegal", "Legal Research",
+      "Legal Writing", "Case Management", "Policy Drafting", "Corporate Governance",
+      "Employment Law", "Labor Law", "POSH", "Arbitration", "Mediation", "Secretarial",
+      // Tech, Cloud & DevOps
       "Python", "JavaScript", "TypeScript", "React", "Angular", "Vue.js", "Node.js", "Next.js",
-      "Java", "Spring Boot", "C++", "C#", ".NET", "Golang", "Rust", "PHP", "Laravel", "Ruby on Rails",
-      "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis", "Snowflake", "BigQuery", "Spark",
-      "AWS", "Azure", "GCP", "Docker", "Kubernetes", "Terraform", "CI/CD", "Jenkins", "Linux",
-      "REST API", "GraphQL", "Microservices", "Selenium", "Playwright", "QA Testing",
-      // Data & AI
-      "Machine Learning", "Deep Learning", "NLP", "LLM", "Generative AI", "PyTorch", "TensorFlow",
-      "Scikit-learn", "Pandas", "NumPy", "Power BI", "Tableau", "Looker", "Data Analysis",
-      "Data Engineering", "ETL", "Airflow", "Databricks", "MS Excel", "Advanced Excel",
-      // Product & Design
-      "Product Management", "Product Strategy", "Product Roadmap", "Agile", "Scrum", "Kanban", "JIRA",
-      "Confluence", "Figma", "Adobe XD", "UI/UX", "Wireframing", "User Research", "A/B Testing",
-      // Marketing & Sales
+      "Java", "Spring Boot", "C++", "C#", ".NET", "Golang", "Rust", "PHP", "Laravel",
+      "Ruby on Rails", "Kotlin", "Swift", "Flutter", "React Native", "HTML", "CSS", "Tailwind CSS",
+      "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis", "Oracle", "Snowflake", "BigQuery",
+      "Spark", "Kafka", "AWS", "Azure", "GCP", "Docker", "Kubernetes", "Terraform", "Ansible",
+      "CI/CD", "Jenkins", "GitHub Actions", "Git", "Linux", "REST API", "GraphQL",
+      "Microservices", "Selenium", "Playwright", "Cypress", "QA Testing", "Manual Testing",
+      "Automation Testing", "API Testing", "Postman", "JMeter",
+      // Data, Analytics & AI
+      "Machine Learning", "Deep Learning", "NLP", "LLM", "Generative AI", "RAG", "PyTorch",
+      "TensorFlow", "Scikit-learn", "Pandas", "NumPy", "Power BI", "Tableau", "Looker",
+      "Data Analysis", "Data Science", "Data Engineering", "ETL", "ELT", "Airflow", "dbt",
+      "Databricks", "Statistics", "A/B Testing", "MS Excel", "Advanced Excel", "Google Sheets",
+      // Product, Project & Design
+      "Product Management", "Product Strategy", "Product Roadmap", "Agile", "Scrum", "Kanban",
+      "JIRA", "Confluence", "Asana", "Trello", "Notion", "Figma", "Adobe XD", "Sketch",
+      "UI/UX", "Wireframing", "Prototyping", "User Research", "Project Management", "PMP",
+      "PRINCE2", "Six Sigma", "Stakeholder Management", "Business Analysis", "BRD", "FRD",
+      // Marketing, Sales & CRM
       "SEO", "SEM", "Google Ads", "Meta Ads", "Google Analytics", "Content Marketing",
-      "Social Media Marketing", "Email Marketing", "Copywriting", "B2B Sales", "Lead Generation",
-      "Account Management", "CRM", "Salesforce", "HubSpot", "Zoho CRM",
-      // Finance & Ops
-      "Financial Modeling", "Valuation", "FP&A", "Accounting", "GST", "TDS", "Auditing",
-      "Tally", "QuickBooks", "SAP", "Oracle ERP", "Budgeting", "Supply Chain", "Procurement",
-      "Logistics", "Inventory Management", "Project Management", "PMP", "Six Sigma",
-      // HR & People
-      "Recruitment", "Talent Acquisition", "Technical Recruiting", "HRIS", "Workday", "Darwinbox",
-      "Payroll", "Employee Relations", "Performance Management", "Onboarding", "L&D",
-      // Legal, Privacy & GRC
-      "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "DPIA", "RoPA", "DSAR",
-      "Privacy by Design", "Data Protection", "Data Privacy", "ISO 27001", "ISO 27701",
-      "SOC 2", "NIST", "GRC", "Regulatory Compliance", "Contract Drafting", "Contract Negotiation",
-      "CLM", "Corporate Law", "M&A", "Due Diligence", "Intellectual Property", "Litigation",
-      "Vendor Risk", "Third-Party Risk", "Risk Management", "Internal Audit", "Information Security"
+      "Social Media Marketing", "Email Marketing", "Copywriting", "Performance Marketing",
+      "B2B Sales", "B2C Sales", "Lead Generation", "Cold Calling", "Account Management",
+      "Business Development", "CRM", "Salesforce", "HubSpot", "Zoho CRM", "Freshsales",
+      // Finance, Accounting & Operations
+      "Financial Modeling", "Valuation", "FP&A", "Accounting", "Bookkeeping", "GST", "TDS",
+      "Income Tax", "Auditing", "Tally", "QuickBooks", "Zoho Books", "SAP", "Oracle ERP",
+      "Budgeting", "Forecasting", "Accounts Payable", "Accounts Receivable", "Reconciliation",
+      "Supply Chain", "Procurement", "Vendor Management", "Logistics", "Inventory Management",
+      // HR & Office Tools
+      "Recruitment", "Talent Acquisition", "Technical Recruiting", "Boolean Search", "HRIS",
+      "Workday", "Darwinbox", "Keka", "Payroll", "Employee Relations", "Performance Management",
+      "Onboarding", "L&D", "HR Operations", "MS Office", "MS Word", "PowerPoint", "SharePoint",
+      // Operations, Admin, Customer Support & RCM
+      "Office Administration", "Business Administration", "Operations Management", "Operations Executive",
+      "Staff Management", "Customer Relations", "Customer Satisfaction", "Customer Service",
+      "Client Relations", "Mail Handling", "Multi-line Telephone Systems", "Sales Operations",
+      "Lead Generation", "Database Management", "Daily Reports", "Dashboards", "Variance Analysis",
+      "Insurance Refunds", "Credit Balance", "Accounts Queries", "RCM", "Revenue Cycle Management",
+      "Communication Skills", "Decision Making", "Team Coordination", "Time Management",
+      // Banking, Insurance, Healthcare, Engineering & Retail
+      "Banking Operations", "KYC/AML", "Underwriting", "Claims Processing", "Loan Processing",
+      "Credit Analysis", "Investment Banking", "Wealth Management", "Mutual Funds", "Taxation",
+      "Medical Billing", "Medical Coding", "ICD-10", "CPT", "HIPAA Compliance", "Clinical Research",
+      "Pharmacovigilance", "Healthcare Operations", "Hospital Administration", "EHR",
+      "AutoCAD", "SolidWorks", "CATIA", "MATLAB", "PLC", "SCADA", "Quality Assurance",
+      "Quality Control", "Lean Manufacturing", "Kaizen", "5S", "Six Sigma Green Belt",
+      "Customer Support", "Technical Support", "CRM Tools", "Zendesk", "Freshdesk",
+      "Retail Management", "Store Operations", "Merchandising", "E-commerce", "Catalog Management",
+      "Public Speaking", "Leadership", "Conflict Resolution", "Problem Solving", "Critical Thinking"
     ];
 
-    const CASE_SENSITIVE_SKILLS = new Set(["AWS", "GCP", "SAP", "SQL", "CRM", "SEO", "SEM", "NLP", "LLM", "ETL", "GRC", "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "DPIA", "RoPA", "DSAR", "CLM", "PMP", "GST", "TDS", "HRIS", "PHP"]);
+    const CASE_SENSITIVE_SKILLS = new Set([
+      "AWS", "GCP", "SAP", "SQL", "CRM", "SEO", "SEM", "NLP", "LLM", "RAG", "ETL", "ELT",
+      "GRC", "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "PIPEDA", "PDPA", "DPIA",
+      "PIA", "RoPA", "DSAR", "DPA", "TIA", "MSA", "NDA", "SLA", "SOW", "CLM", "PMP", "GST",
+      "TDS", "HRIS", "PHP", "CSS", "HTML", "SOX", "FCPA", "AML", "KYC", "TPRM", "BRD", "FRD", "POSH"
+    ]);
 
     function extractSkillsFromText(rawText) {
       if (!rawText || !rawText.trim()) return [];
       const found = [];
       const seenLower = new Set();
-
-      // 1. Parse explicit Skills / Competencies section if present
-      const secMatch = rawText.match(/(?:technical\s+skills|key\s+skills|core\s+competencies|skills\s*&\s*tools|skills)\s*[:\-\n]+([\s\S]{5,500})/i);
-      if (secMatch && secMatch[1]) {
-        const stopAt = secMatch[1].split(/\n\s*(?:experience|work\s+history|employment|education|projects|certifications|summary)\b/i)[0];
-        const tokens = stopAt.split(/[,|•·;\/\n]+/).map((t) => t.replace(/^[-–—*\s]+|[-–—*\s]+$/g, "")).filter((t) => t.length >= 2 && t.length <= 36 && t.split(/\s+/).length <= 4);
-        for (const tok of tokens) {
-          const low = tok.toLowerCase();
-          if (!seenLower.has(low) && !/^(and|or|with|the|using|etc|years|months)$/i.test(low)) {
-            seenLower.add(low);
-            found.push(tok);
-          }
-          if (found.length >= 12) break;
-        }
-      }
-
-      // 2. Match against strict whole-word dictionary
       const cleaned = rawText.replace(/\s+/g, " ");
+
+      // 1. Match against comprehensive 220+ whole-word dictionary first
       for (const skill of KNOWN_SKILLS) {
-        if (found.length >= 16) break;
+        if (found.length >= 50) break;
         const low = skill.toLowerCase();
         if (seenLower.has(low)) continue;
         const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -580,7 +606,22 @@
           found.push(skill);
         }
       }
-      return found.slice(0, 16);
+
+      // 2. Also parse explicit Skills / Competencies section (with or without colon)
+      const secMatch = cleaned.match(/\b(?:technical\s+skills|key\s+skills|core\s+competencies|areas\s+of\s+expertise|skills\s*&\s*tools|skills)\b(?:\s*[:\-]+\s*|\s+)(.{5,500})/i);
+      if (secMatch && secMatch[1]) {
+        const stopAt = secMatch[1].split(/\b(?:work\s+experience|professional\s+experience|experience|employment|education|academic|projects|certifications|declaration|languages|hobbies|references)\b/i)[0];
+        const tokens = stopAt.split(/[,|•·;\/]+/).map((t) => t.replace(/^[-–—*\s]+|[-–—*\s]+$/g, "")).filter((t) => t.length >= 2 && t.length <= 42 && t.split(/\s+/).length <= 5);
+        for (const tok of tokens) {
+          if (found.length >= 50) break;
+          const low = tok.toLowerCase();
+          if (!seenLower.has(low) && !/^(and|or|with|the|using|etc|years|months|in|for|of|to)$/i.test(low)) {
+            seenLower.add(low);
+            found.push(tok);
+          }
+        }
+      }
+      return found.slice(0, 50);
     }
 
     const DEFAULT_COVER_TEMPLATE = [
@@ -1070,7 +1111,7 @@
     }
 
     function queuePortalJob(job) {
-      if (!state.portalQueue.some((p) => p.title === job.title && p.company === job.company)) {
+      if (!state.portalQueue.some((p) => (p.url && job.url && p.url === job.url) || (p.title.trim().toLowerCase() === job.title.trim().toLowerCase() && p.company.trim().toLowerCase() === job.company.trim().toLowerCase()))) {
         state.portalQueue.unshift({
           id: job.id, title: job.title, company: job.company, region: job.region,
           summary: job.summary || "", skills: job.skills || "",
@@ -1104,10 +1145,21 @@
     function computeMatchScore(job, cvId) {
       const cv = state.cvs.find((c) => c.id === cvId);
       const cvSkills = (cv && cv.skills ? cv.skills : "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
-      const jobText = `${job.title} ${job.skills || ""}`.toLowerCase();
-      if (cvSkills.length === 0) return 85;
-      const hits = cvSkills.filter((sk) => jobText.includes(sk)).length;
-      return Math.min(98, 72 + Math.round((hits / cvSkills.length) * 26));
+      if (cvSkills.length === 0) return 45;
+      const jobFullText = `${job.title || ""} ${job.skills || ""} ${job.summary || ""}`.toLowerCase();
+      const rawReq = (job.skills || "").split(",").map((x) => x.trim()).filter(Boolean);
+      const extractedReq = extractSkillsFromText(`${job.title || ""} ${job.skills || ""} ${job.summary || ""}`);
+      const reqSkills = [...new Set([...rawReq, ...extractedReq].map((x) => x.toLowerCase()))];
+      if (reqSkills.length > 0) {
+        const covered = reqSkills.filter((req) => cvSkills.some((cs) => cs === req || req.includes(cs) || cs.includes(req))).length;
+        const skillPct = Math.round((covered / reqSkills.length) * 75);
+        const titleWords = (job.title || "").toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+        const titleHits = titleWords.filter((w) => cvSkills.some((cs) => cs.includes(w))).length;
+        const titleBonus = titleWords.length ? Math.min(20, Math.round((titleHits / titleWords.length) * 20)) : 10;
+        return Math.max(25, Math.min(98, 15 + skillPct + titleBonus));
+      }
+      const cvHits = cvSkills.filter((sk) => jobFullText.includes(sk)).length;
+      return Math.max(35, Math.min(92, 45 + cvHits * 12));
     }
 
     function getMissingSkills(job, cvId) {
@@ -1432,6 +1484,8 @@
       intervalSelect.value = String(state.intervalSec);
       feedSourceSelect.value = state.feedSource;
       intervalSelect.classList.toggle("hidden", currentUser !== "demo");
+      const isAdmin = (currentUser || "").toLowerCase() === ADMIN_EMAIL || (state.notifyEmail || "").toLowerCase() === ADMIN_EMAIL;
+      openOwnerModalBtn.classList.toggle("hidden", !isAdmin);
       feedBadge.textContent = state.feedSource === "cloud" ? "CareerRelay Cloud" : (state.feedSource === "simulated" ? "Demo" : state.feedSource.toUpperCase());
       notifyEmailInput.value = state.notifyEmail || "";
       emailModeSelect.value = state.emailMode || "instant";
@@ -1558,9 +1612,13 @@
               ${item.missingSkills && item.missingSkills.length ? `<div class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Missing skills to highlight: ${escapeHtml(item.missingSkills.join(", "))}</div>` : ""}
               ${item.coverNote ? `<p class="whitespace-pre-line text-[11px] text-slate-600 dark:text-slate-400 mt-2 bg-white/70 dark:bg-slate-900/70 rounded-lg p-2.5 border border-slate-200/70 dark:border-slate-800 leading-relaxed">${escapeHtml(item.coverNote)}</p>` : ""}
             </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input data-hr-input-portal="${item.id}" type="email" value="${escapeHtml(item.applyEmail || "")}" placeholder="Enter HR email if found..." class="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-1 text-[11px] text-slate-900 dark:text-white" />
+              <button type="button" data-email-hr-portal="${item.id}" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold cursor-pointer shrink-0">Email HR ↗</button>
+            </div>
             <div class="flex flex-wrap gap-2">
               <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold">Open Portal ↗</a>
-              ${item.applyEmail ? `<button type="button" data-email-hr-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer">Email HR (${escapeHtml(item.applyEmail)}) ↗</button>` : ""}
+              <a href="https://www.google.com/search?q=${encodeURIComponent('"' + item.company + '" ("HR" OR "Recruiter" OR "Talent Acquisition") site:linkedin.com/in')}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-700 dark:text-sky-300 text-xs font-semibold">Find HR ↗</a>
               <button type="button" data-copy-portal-url="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Link</button>
               <button type="button" data-copy-portal-note="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Note</button>
               <button type="button" data-copy-portal-cv="${item.id}" class="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-semibold cursor-pointer">Copy Tailored CV</button>
@@ -1916,6 +1974,17 @@
       }
     });
 
+    portalQueueList.addEventListener("input", (e) => {
+      const inp = e.target.closest("[data-hr-input-portal]");
+      if (inp) {
+        const item = state.portalQueue.find((p) => p.id === inp.getAttribute("data-hr-input-portal"));
+        if (item) {
+          item.applyEmail = inp.value.trim();
+          persistCurrentUser();
+        }
+      }
+    });
+
     portalQueueList.addEventListener("click", (e) => {
       const copyUrlBtn = e.target.closest("[data-copy-portal-url]");
       if (copyUrlBtn) {
@@ -1925,8 +1994,13 @@
       }
       const emailHrBtn = e.target.closest("[data-email-hr-portal]");
       if (emailHrBtn) {
-        const item = state.portalQueue.find((p) => p.id === emailHrBtn.getAttribute("data-email-hr-portal"));
-        if (item && item.applyEmail) {
+        const pid = emailHrBtn.getAttribute("data-email-hr-portal");
+        const item = state.portalQueue.find((p) => p.id === pid);
+        if (item) {
+          if (!item.applyEmail) {
+            showToast("Enter HR Email", "Tap Find HR ↗ or type the recruiter's email first.", false);
+            return;
+          }
           const href = buildMailtoHref(item);
           copyTextSafe(`To: ${item.applyEmail}\n\n${item.coverNote || buildCoverNote(item)}`, `HR email (${item.applyEmail}) & cover letter`);
           try { window.open(href, "_blank"); } catch (err) {}
