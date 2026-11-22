@@ -124,6 +124,14 @@
           <label for="adzunaKeyInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Adzuna India App Key</label>
           <input id="adzunaKeyInput" type="password" placeholder="Optional App Key" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
         </div>
+        <div>
+          <label for="ghBoardsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Greenhouse Company Slugs (comma-separated)</label>
+          <input id="ghBoardsInput" type="text" placeholder="ivalua, speechify, addepar1, fictiv, abacusinsights" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label for="ashbyBoardsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Ashby Company Slugs (comma-separated)</label>
+          <input id="ashbyBoardsInput" type="text" placeholder="litmus, lyric, nexus-cognitive, rearc, gen-digital" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+        </div>
         <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
           <input id="readGmailAlertsCheck" type="checkbox" class="rounded accent-indigo-600" />
           <span>Auto-read Naukri / LinkedIn / Indeed alert emails in Gmail (IMAP)</span>
@@ -258,6 +266,7 @@
             <a id="topLinkIndeed" href="https://in.indeed.com/" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Indeed ↗</a>
             <a id="topLinkFoundit" href="https://www.foundit.in/" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">Foundit ↗</a>
             <a id="topLinkWellfound" href="https://wellfound.com/jobs" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">Wellfound ↗</a>
+            <a id="topLinkGoogleJobs" href="https://www.google.com/search?q=jobs+in+india&ibp=htl;jobs" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">Google Jobs ↗</a>
           </div>
         </div>
 
@@ -419,6 +428,14 @@
               </div>
             </div>
             <div>
+              <label for="postedWithinSelect" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Job Freshness (Posted Within)</label>
+              <select id="postedWithinSelect" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200">
+                <option value="0">Any Time</option>
+                <option value="24">Last 24 Hours (Recent Only)</option>
+                <option value="72">Last 3 Days</option>
+              </select>
+            </div>
+            <div>
               <label for="excludeKeywordsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Skip Titles With Words</label>
               <input id="excludeKeywordsInput" type="text" placeholder="intern, internship, unpaid" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
             </div>
@@ -475,41 +492,86 @@
     const SESSION_KEY = "careerrelay_session_v2";
 
     const SAMPLE_JOBS = [
-      { title: "Software Engineer", skills: "Python, AWS, Docker, SQL", salaryLpa: 14, expLevel: "3-5", company: "NextWave Tech", region: "Bengaluru", applyType: "auto", applyEmail: "careers@nextwave.in", url: "" },
-      { title: "Product Manager", skills: "Product Management, Roadmap, Agile, SQL", salaryLpa: 18, expLevel: "3-5", company: "BrightCart India", region: "Remote", applyType: "auto", applyEmail: "talent@brightcart.in", url: "" },
-      { title: "Business Analyst", skills: "SQL, Data Analysis, Excel, Power BI", salaryLpa: 9, expLevel: "0-2", company: "Meridian FinServe", region: "Mumbai", applyType: "portal", url: "" },
-      { title: "Data Analyst", skills: "SQL, Python, Power BI, Tableau", salaryLpa: 11, expLevel: "0-2", company: "InsightGrid", region: "Pune", applyType: "auto", applyEmail: "hr@insightgrid.in", url: "" },
-      { title: "Financial Analyst", skills: "Financial Modeling, Excel, FP&A", salaryLpa: 13, expLevel: "3-5", company: "Crest Capital", region: "Gurugram", applyType: "portal", url: "" },
-      { title: "HR Manager", skills: "Talent Acquisition, HRIS, Payroll", salaryLpa: 12, expLevel: "5+", company: "PeopleFirst Global", region: "Hyderabad", applyType: "auto", applyEmail: "jobs@peoplefirst.in", url: "" },
-      { title: "Data Privacy Analyst", skills: "DPDP, GDPR, DPIA, ISO 27001", salaryLpa: 16, expLevel: "3-5", company: "FinSecure Systems", region: "Pune", applyType: "auto", applyEmail: "careers@finsecure.in", url: "" },
-      { title: "Corporate Counsel", skills: "Contract Drafting, Compliance, Corporate Law", salaryLpa: 22, expLevel: "5+", company: "Apex Logistics", region: "Mumbai", applyType: "portal", url: "" }
+      { title: "Software Engineer", skills: "Python, AWS, Docker, SQL", summary: "Build scalable cloud APIs and microservices with Python, AWS, and Docker.", postedHoursAgo: 3, salaryLpa: 14, expLevel: "3-5", company: "NextWave Tech", region: "Bengaluru", applyType: "auto", applyEmail: "careers@nextwave.in", url: "" },
+      { title: "Product Manager", skills: "Product Management, Roadmap, Agile, SQL", summary: "Own product roadmap, sprint planning, and funnel analytics across mobile and web.", postedHoursAgo: 6, salaryLpa: 18, expLevel: "3-5", company: "BrightCart India", region: "Remote", applyType: "auto", applyEmail: "talent@brightcart.in", url: "" },
+      { title: "Business Analyst", skills: "SQL, Data Analysis, Excel, Power BI", summary: "Partner with finance and product teams on SQL reporting and Power BI dashboards.", postedHoursAgo: 18, salaryLpa: 9, expLevel: "0-2", company: "Meridian FinServe", region: "Mumbai", applyType: "portal", url: "" },
+      { title: "Data Analyst", skills: "SQL, Python, Power BI, Tableau", summary: "Analyze customer retention cohorts and build automated executive KPI dashboards.", postedHoursAgo: 4, salaryLpa: 11, expLevel: "0-2", company: "InsightGrid", region: "Pune", applyType: "auto", applyEmail: "hr@insightgrid.in", url: "" },
+      { title: "Financial Analyst", skills: "Financial Modeling, Excel, FP&A", summary: "Lead monthly variance analysis, forecasting models, and board reporting.", postedHoursAgo: 36, salaryLpa: 13, expLevel: "3-5", company: "Crest Capital", region: "Gurugram", applyType: "portal", url: "" },
+      { title: "HR Manager", skills: "Talent Acquisition, HRIS, Payroll", summary: "Oversee end-to-end hiring, employee relations, and HRIS operations across India.", postedHoursAgo: 10, salaryLpa: 12, expLevel: "5+", company: "PeopleFirst Global", region: "Hyderabad", applyType: "auto", applyEmail: "jobs@peoplefirst.in", url: "" },
+      { title: "Data Privacy Analyst", skills: "DPDP, GDPR, DPIA, ISO 27001", summary: "Conduct DPIAs, maintain RoPA records, and support DPDP & GDPR compliance audits.", postedHoursAgo: 5, salaryLpa: 16, expLevel: "3-5", company: "FinSecure Systems", region: "Pune", applyType: "auto", applyEmail: "careers@finsecure.in", url: "" },
+      { title: "Corporate Counsel", skills: "Contract Drafting, Compliance, Corporate Law", summary: "Draft and negotiate enterprise SaaS agreements and advise on regulatory compliance.", postedHoursAgo: 40, salaryLpa: 22, expLevel: "5+", company: "Apex Logistics", region: "Mumbai", applyType: "portal", url: "" }
     ];
 
     const KNOWN_SKILLS = [
-      "Python", "JavaScript", "TypeScript", "React", "Node.js", "Java", "C++", "SQL",
-      "PostgreSQL", "MongoDB", "AWS", "Azure", "GCP", "Docker", "Kubernetes", "Git",
-      "REST API", "Machine Learning", "TensorFlow", "Power BI", "Tableau", "Excel",
-      "Data Analysis", "Product Management", "Roadmap", "Agile", "Scrum", "JIRA",
-      "Figma", "UI/UX", "SEO", "Google Analytics", "Content Marketing", "Social Media",
-      "CRM", "Salesforce", "HubSpot", "Financial Modeling", "Accounting", "Tally",
-      "SAP", "FP&A", "Budgeting", "Recruitment", "Talent Acquisition", "HRIS",
-      "Payroll", "Onboarding", "Supply Chain", "Procurement", "Project Management",
-      "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "DPIA", "RoPA",
-      "Privacy by Design", "Data Protection", "ISO 27001", "SOC 2", "GRC",
-      "Compliance", "Contract Drafting", "Contract Negotiation", "Corporate Law",
-      "Vendor Risk", "Risk Management", "Internal Audit", "Information Security"
+      // Tech & Cloud
+      "Python", "JavaScript", "TypeScript", "React", "Angular", "Vue.js", "Node.js", "Next.js",
+      "Java", "Spring Boot", "C++", "C#", ".NET", "Golang", "Rust", "PHP", "Laravel", "Ruby on Rails",
+      "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis", "Snowflake", "BigQuery", "Spark",
+      "AWS", "Azure", "GCP", "Docker", "Kubernetes", "Terraform", "CI/CD", "Jenkins", "Linux",
+      "REST API", "GraphQL", "Microservices", "Selenium", "Playwright", "QA Testing",
+      // Data & AI
+      "Machine Learning", "Deep Learning", "NLP", "LLM", "Generative AI", "PyTorch", "TensorFlow",
+      "Scikit-learn", "Pandas", "NumPy", "Power BI", "Tableau", "Looker", "Data Analysis",
+      "Data Engineering", "ETL", "Airflow", "Databricks", "MS Excel", "Advanced Excel",
+      // Product & Design
+      "Product Management", "Product Strategy", "Product Roadmap", "Agile", "Scrum", "Kanban", "JIRA",
+      "Confluence", "Figma", "Adobe XD", "UI/UX", "Wireframing", "User Research", "A/B Testing",
+      // Marketing & Sales
+      "SEO", "SEM", "Google Ads", "Meta Ads", "Google Analytics", "Content Marketing",
+      "Social Media Marketing", "Email Marketing", "Copywriting", "B2B Sales", "Lead Generation",
+      "Account Management", "CRM", "Salesforce", "HubSpot", "Zoho CRM",
+      // Finance & Ops
+      "Financial Modeling", "Valuation", "FP&A", "Accounting", "GST", "TDS", "Auditing",
+      "Tally", "QuickBooks", "SAP", "Oracle ERP", "Budgeting", "Supply Chain", "Procurement",
+      "Logistics", "Inventory Management", "Project Management", "PMP", "Six Sigma",
+      // HR & People
+      "Recruitment", "Talent Acquisition", "Technical Recruiting", "HRIS", "Workday", "Darwinbox",
+      "Payroll", "Employee Relations", "Performance Management", "Onboarding", "L&D",
+      // Legal, Privacy & GRC
+      "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "DPIA", "RoPA", "DSAR",
+      "Privacy by Design", "Data Protection", "Data Privacy", "ISO 27001", "ISO 27701",
+      "SOC 2", "NIST", "GRC", "Regulatory Compliance", "Contract Drafting", "Contract Negotiation",
+      "CLM", "Corporate Law", "M&A", "Due Diligence", "Intellectual Property", "Litigation",
+      "Vendor Risk", "Third-Party Risk", "Risk Management", "Internal Audit", "Information Security"
     ];
+
+    const CASE_SENSITIVE_SKILLS = new Set(["AWS", "GCP", "SAP", "SQL", "CRM", "SEO", "SEM", "NLP", "LLM", "ETL", "GRC", "DPDP", "GDPR", "CCPA", "CPRA", "LGPD", "HIPAA", "DPIA", "RoPA", "DSAR", "CLM", "PMP", "GST", "TDS", "HRIS", "PHP"]);
 
     function extractSkillsFromText(rawText) {
       if (!rawText || !rawText.trim()) return [];
-      const cleaned = rawText.replace(/\s+/g, " ");
       const found = [];
-      for (const skill of KNOWN_SKILLS) {
-        const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const re = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, "i");
-        if (re.test(cleaned)) found.push(skill);
+      const seenLower = new Set();
+
+      // 1. Parse explicit Skills / Competencies section if present
+      const secMatch = rawText.match(/(?:technical\s+skills|key\s+skills|core\s+competencies|skills\s*&\s*tools|skills)\s*[:\-\n]+([\s\S]{5,500})/i);
+      if (secMatch && secMatch[1]) {
+        const stopAt = secMatch[1].split(/\n\s*(?:experience|work\s+history|employment|education|projects|certifications|summary)\b/i)[0];
+        const tokens = stopAt.split(/[,|•·;\/\n]+/).map((t) => t.replace(/^[-–—*\s]+|[-–—*\s]+$/g, "")).filter((t) => t.length >= 2 && t.length <= 36 && t.split(/\s+/).length <= 4);
+        for (const tok of tokens) {
+          const low = tok.toLowerCase();
+          if (!seenLower.has(low) && !/^(and|or|with|the|using|etc|years|months)$/i.test(low)) {
+            seenLower.add(low);
+            found.push(tok);
+          }
+          if (found.length >= 12) break;
+        }
       }
-      return found.slice(0, 12);
+
+      // 2. Match against strict whole-word dictionary
+      const cleaned = rawText.replace(/\s+/g, " ");
+      for (const skill of KNOWN_SKILLS) {
+        if (found.length >= 16) break;
+        const low = skill.toLowerCase();
+        if (seenLower.has(low)) continue;
+        const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const flags = CASE_SENSITIVE_SKILLS.has(skill) ? "" : "i";
+        const re = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, flags);
+        if (re.test(cleaned)) {
+          seenLower.add(low);
+          found.push(skill);
+        }
+      }
+      return found.slice(0, 16);
     }
 
     const DEFAULT_COVER_TEMPLATE = [
@@ -546,9 +608,12 @@
         maxDailyApplies: 15,
         minSalaryLpa: 0,
         experienceLevel: "Any",
+        postedWithinHours: 0,
         adzunaAppId: "",
         adzunaAppKey: "",
-        readGmailAlerts: false,
+        greenhouseBoards: "ivalua, speechify, addepar1, fictiv, abacusinsights",
+        ashbyCompanies: "litmus, lyric, nexus-cognitive, rearc, gen-digital",
+        readGmailAlerts: true,
         scannedCount: 0,
         matchedCount: 0,
         cvs: isDemo ? [{ id: "cv-1", name: "Sample_Resume.pdf", skills: "Product, Agile, Analytics, SQL" }] : [],
@@ -671,6 +736,7 @@
     const topLinkIndeed = document.getElementById("topLinkIndeed");
     const topLinkFoundit = document.getElementById("topLinkFoundit");
     const topLinkWellfound = document.getElementById("topLinkWellfound");
+    const topLinkGoogleJobs = document.getElementById("topLinkGoogleJobs");
 
     const cvFilePicker = document.getElementById("cvFilePicker");
     const uploadCvBtn = document.getElementById("uploadCvBtn");
@@ -689,6 +755,7 @@
     const dailyCapInput = document.getElementById("dailyCapInput");
     const minSalaryInput = document.getElementById("minSalaryInput");
     const experienceSelect = document.getElementById("experienceSelect");
+    const postedWithinSelect = document.getElementById("postedWithinSelect");
     const excludeKeywordsInput = document.getElementById("excludeKeywordsInput");
     const saveAlertPrefsBtn = document.getElementById("saveAlertPrefsBtn");
     const sendTestAlertBtn = document.getElementById("sendTestAlertBtn");
@@ -706,6 +773,8 @@
     const closeOwnerModalBtn = document.getElementById("closeOwnerModalBtn");
     const adzunaIdInput = document.getElementById("adzunaIdInput");
     const adzunaKeyInput = document.getElementById("adzunaKeyInput");
+    const ghBoardsInput = document.getElementById("ghBoardsInput");
+    const ashbyBoardsInput = document.getElementById("ashbyBoardsInput");
     const readGmailAlertsCheck = document.getElementById("readGmailAlertsCheck");
     const saveOwnerKeysBtn = document.getElementById("saveOwnerKeysBtn");
     const downloadConfigBtn = document.getElementById("downloadConfigBtn");
@@ -790,7 +859,8 @@
         naukriUrl: region === "Any" ? `https://www.naukri.com/${roleSlug}-jobs` : (region === "Remote" ? `https://www.naukri.com/${roleSlug}-jobs?wfhType=2` : `https://www.naukri.com/${roleSlug}-jobs-in-${regionSlug}`),
         indeedUrl: `https://in.indeed.com/jobs?q=${qRole}${qLoc ? "&l=" + qLoc : ""}`,
         founditUrl: `https://www.foundit.in/srp/results?query=${qRole}${qLoc ? "&locations=" + qLoc : ""}`,
-        wellfoundUrl: `https://wellfound.com/jobs?query=${qRole}`
+        wellfoundUrl: `https://wellfound.com/jobs?query=${qRole}`,
+        googleJobsUrl: `https://www.google.com/search?q=${encodeURIComponent(role + (region === "Any" ? " jobs in India" : " jobs in " + region))}&ibp=htl;jobs`
       };
     }
 
@@ -821,7 +891,7 @@
         emailValidityHint.textContent = "Add your email and tap Save Alert Settings.";
         emailValidityHint.className = "text-[11px] mt-1 text-slate-400";
       } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-        emailValidityHint.textContent = "✓ Valid email — alerts logged in 🔔 Alerts & sent by cloud worker.";
+        emailValidityHint.textContent = "✓ Valid email — browser tests log in 🔔 Alerts; real Gmail emails are sent by job_watcher.py.";
         emailValidityHint.className = "text-[11px] mt-1 text-emerald-500";
       } else {
         emailValidityHint.textContent = "Enter a valid email address";
@@ -842,7 +912,10 @@
       const applicant = (state.fullName || "").trim() || (currentUser ? currentUser : "Candidate");
       const contactEmail = (state.notifyEmail || "").trim() || "your.email@gmail.com";
       const cvObj = state.cvs.find((c) => c.name === job.cvName);
-      const skillsText = (cvObj && cvObj.skills) ? cvObj.skills : (job.skills || "relevant domain expertise");
+      const cvList = (cvObj && cvObj.skills ? cvObj.skills : "").split(",").map((x) => x.trim()).filter(Boolean);
+      const jobText = `${job.title || ""} ${job.skills || ""} ${job.summary || ""}`.toLowerCase();
+      const matchedFromJd = cvList.filter((sk) => jobText.includes(sk.toLowerCase()));
+      const skillsText = matchedFromJd.length ? matchedFromJd.join(", ") : (cvList.join(", ") || job.skills || "relevant domain expertise");
       const linkedin = (state.linkedinUrl || "").trim();
       const portfolio = (state.portfolioUrl || "").trim();
       const tpl = (state.coverLetterTemplate || "").trim() || DEFAULT_COVER_TEMPLATE;
@@ -858,6 +931,44 @@
       if (linkedin && !tpl.toLowerCase().includes("{{linkedin}}")) out += `\nLinkedIn: ${linkedin}`;
       if (portfolio && !tpl.toLowerCase().includes("{{portfolio}}")) out += `\nPortfolio: ${portfolio}`;
       return out;
+    }
+
+    function extractHrEmail(text) {
+      if (!text) return "";
+      const matches = text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [];
+      for (const addr of matches) {
+        const low = addr.toLowerCase();
+        if (["noreply", "no-reply", "donotreply", "example.com", "sentry.io"].some((s) => low.includes(s))) continue;
+        return addr;
+      }
+      return "";
+    }
+
+    function buildMailtoHref(job) {
+      const hr = (job.applyEmail || "").trim();
+      if (!hr) return "";
+      const applicant = (state.fullName || "").trim() || (currentUser ? currentUser : "Candidate");
+      const subj = encodeURIComponent(`Application for ${job.title} - ${applicant}`);
+      const body = encodeURIComponent(job.coverNote || buildCoverNote(job));
+      return `mailto:${encodeURIComponent(hr)}?subject=${subj}&body=${body}`;
+    }
+
+    function buildTailoredCvSnippet(job) {
+      const cvObj = state.cvs.find((c) => c.name === job.cvName);
+      const mySkills = (cvObj && cvObj.skills) ? cvObj.skills : "";
+      const jobSkills = job.skills || "";
+      const missing = (job.missingSkills || []).join(", ");
+      const applicant = (state.fullName || "").trim() || (currentUser ? currentUser : "Candidate");
+      return [
+        `TAILORED SUMMARY FOR: ${job.title} @ ${job.company} (${job.region})`,
+        `Candidate: ${applicant}`,
+        ``,
+        `Profile Summary:`,
+        `Results-driven ${job.title} with strong experience in ${mySkills || jobSkills || "core domain operations"}. Proven ability to deliver on ${job.company}'s requirements${jobSkills ? ` across ${jobSkills}` : ""}.`,
+        ``,
+        `Priority Skills to Highlight: ${[mySkills, jobSkills].filter(Boolean).join(", ")}`,
+        missing ? `Keywords to Emphasize / Add if Applicable: ${missing}` : `All listed job skills are already covered on ${job.cvName}.`
+      ].join("\n");
     }
 
     function fallbackCopyText(text, label) {
@@ -890,8 +1001,11 @@
       const targetInfo = job.applyEmail ? `Emailed ${job.applyEmail}` : (methodLabel || (isAuto ? "Auto-Applied" : "Manual"));
       state.applied.unshift({
         id: job.id, title: job.title, company: job.company, region: job.region,
-        cvName: job.cvName, coverNote, method: targetInfo, status: "Applied", notes: "",
-        time, appliedAt: Date.now()
+        summary: job.summary || "", skills: job.skills || "",
+        salaryLpa: job.salaryLpa || 0, salaryText: job.salaryText || "",
+        expLevel: job.expLevel || "", postedHoursAgo: job.postedHoursAgo ?? null,
+        url: job.url || "", applyEmail: job.applyEmail || "", cvName: job.cvName, coverNote, method: targetInfo,
+        status: "Applied", notes: "", time, appliedAt: Date.now()
       });
       if (state.emailAlertsOn) {
         addNotification(isAuto ? `Auto-Applied: ${job.title}` : `Applied: ${job.title}`, `${job.company} (${job.region}) · CV: ${job.cvName}`, true);
@@ -904,9 +1018,11 @@
       if (!state.portalQueue.some((p) => p.title === job.title && p.company === job.company)) {
         state.portalQueue.unshift({
           id: job.id, title: job.title, company: job.company, region: job.region,
-          salaryLpa: job.salaryLpa || 0, expLevel: job.expLevel || "",
+          summary: job.summary || "", skills: job.skills || "",
+          salaryLpa: job.salaryLpa || 0, salaryText: job.salaryText || "",
+          expLevel: job.expLevel || "", postedHoursAgo: job.postedHoursAgo ?? null,
           missingSkills: job.missingSkills || [],
-          cvName: job.cvName, coverNote: job.coverNote || buildCoverNote(job), url: job.url
+          cvName: job.cvName, applyEmail: job.applyEmail || "", coverNote: job.coverNote || buildCoverNote(job), url: job.url
         });
       }
       if (state.emailAlertsOn) {
@@ -951,6 +1067,10 @@
     function checkSalaryAndExp(template) {
       const minSal = Number(state.minSalaryLpa || 0);
       const reqExp = state.experienceLevel || "Any";
+      const maxHours = Number(state.postedWithinHours || 0);
+      if (maxHours > 0 && typeof template.postedHoursAgo === "number" && template.postedHoursAgo > maxHours) {
+        return { ok: false, reason: `Older than ${maxHours}h` };
+      }
       if (minSal > 0 && template.salaryLpa && template.salaryLpa < minSal) {
         return { ok: false, reason: `Below ₹${minSal} LPA` };
       }
@@ -976,14 +1096,18 @@
         const job = {
           id: "job-" + Date.now() + "-" + state.scannedCount,
           title: template.title, company: template.company, region: template.region,
-          salaryLpa: template.salaryLpa || 0, expLevel: template.expLevel || "",
+          summary: template.summary || (template.skills ? `Key skills: ${template.skills}` : ""),
+          skills: template.skills || "",
+          postedHoursAgo: typeof template.postedHoursAgo === "number" ? template.postedHoursAgo : null,
+          salaryLpa: template.salaryLpa || 0, salaryText: template.salaryText || "",
+          expLevel: template.expLevel || "",
           missingSkills, skipReason: matchedRule && !salExp.ok ? salExp.reason : "",
           applyType: template.applyType || "auto", applyEmail: template.applyEmail || "",
           url: resolvedUrl, matched: isQualifiedMatch, passedScore, matchScore, cvName, applied: false
         };
         if (isQualifiedMatch) job.coverNote = buildCoverNote(job);
         state.feed.unshift(job);
-        if (state.feed.length > 8) state.feed.pop();
+        while (state.feed.length > 25) state.feed.pop();
 
         if (isQualifiedMatch) {
           state.matchedCount += 1;
@@ -1008,37 +1132,71 @@
     async function fetchLiveJobs() {
       const src = state.feedSource;
       const activeRules = state.rules.filter((r) => r.active);
-      const primary = activeRules[0] || { role: "Software Engineer", region: "India" };
+      const rulesToQuery = activeRules.length ? activeRules.slice(0, 5) : [{ role: "Software Engineer", region: "India" }];
       if (src === "adzuna") {
         if (!state.adzunaAppId || !state.adzunaAppKey) {
           throw new Error("Add your free Adzuna App ID & Key in Owner Setup (footer) to use Live India Feed.");
         }
-        const where = primary.region === "Any" || primary.region === "Remote" ? "India" : primary.region;
-        const url = `https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${encodeURIComponent(state.adzunaAppId)}&app_key=${encodeURIComponent(state.adzunaAppKey)}&what=${encodeURIComponent(primary.role)}&where=${encodeURIComponent(where)}&results_per_page=8`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Adzuna API returned status " + res.status);
-        const data = await res.json();
-        return (data.results || []).slice(0, 5).map((j) => ({
-          title: j.title || primary.role,
-          skills: j.description ? j.description.slice(0, 120) : "",
-          company: (j.company && j.company.display_name) || "Company",
-          region: (j.location && j.location.display_name) || where,
-          applyType: "portal",
-          url: j.redirect_url || ""
+        const maxDays = Number(state.postedWithinHours || 0) === 24 ? "&max_days_old=1" : (Number(state.postedWithinHours || 0) === 72 ? "&max_days_old=3" : "");
+        const perRuleBatches = await Promise.all(rulesToQuery.map(async (rule) => {
+          const where = rule.region === "Any" || rule.region === "Remote" ? "India" : rule.region;
+          let res = await fetch(`https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${encodeURIComponent(state.adzunaAppId)}&app_key=${encodeURIComponent(state.adzunaAppKey)}&what=${encodeURIComponent(rule.role)}&where=${encodeURIComponent(where)}${maxDays}&results_per_page=50`);
+          if (!res.ok) throw new Error("Adzuna API returned status " + res.status);
+          let data = await res.json();
+          if (!(data.results && data.results.length)) {
+            const keywords = rule.role.split(/\s+/).filter((w) => w.length > 2).slice(0, 3).join(" ");
+            res = await fetch(`https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${encodeURIComponent(state.adzunaAppId)}&app_key=${encodeURIComponent(state.adzunaAppKey)}&what_or=${encodeURIComponent(keywords || rule.role)}&where=India${maxDays}&results_per_page=50`);
+            if (res.ok) data = await res.json();
+          }
+          return (data.results || []).slice(0, 12).map((j) => {
+            const hrs = j.created ? Math.max(1, Math.round((Date.now() - Date.parse(j.created)) / 3600000)) : null;
+            const cleanDesc = j.description ? j.description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
+            const extracted = extractSkillsFromText(`${j.title || ""} ${cleanDesc}`).join(", ");
+            const expMatch = cleanDesc.match(/(\d+\s*(?:-|to|–)\s*\d+|\d+\s*\+)\s*(?:years?|yrs?)/i);
+            const expLevel = expMatch ? expMatch[1].replace(/\s*to\s*/i, "-").replace(/\s+/g, "") : "";
+            const minLpa = j.salary_min && j.salary_min > 100000 ? Math.round(j.salary_min / 100000) : 0;
+            const maxLpa = j.salary_max && j.salary_max > 100000 ? Math.round(j.salary_max / 100000) : 0;
+            const salaryText = minLpa && maxLpa ? `₹${minLpa}–${maxLpa} LPA` : (minLpa ? `₹${minLpa}+ LPA` : "");
+            return {
+              title: j.title || rule.role,
+              skills: extracted || cleanDesc.slice(0, 120),
+              summary: cleanDesc.slice(0, 320),
+              expLevel,
+              salaryLpa: minLpa,
+              salaryText,
+              postedHoursAgo: hrs,
+              company: (j.company && j.company.display_name) || "Company",
+              region: (j.location && j.location.display_name) || where,
+              applyEmail: extractHrEmail(cleanDesc),
+              applyType: extractHrEmail(cleanDesc) ? "auto" : "portal",
+              url: j.redirect_url || ""
+            };
+          });
         }));
+        const seenUrls = new Set();
+        return perRuleBatches.flat().filter((item) => {
+          const key = item.url || `${item.title}-${item.company}`;
+          if (seenUrls.has(key)) return false;
+          seenUrls.add(key);
+          return true;
+        }).slice(0, 25);
       }
       if (src === "remotive") {
-        const res = await fetch(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(primary.role)}&limit=8`);
-        if (!res.ok) throw new Error("Remotive API returned status " + res.status);
-        const data = await res.json();
-        return (data.jobs || []).slice(0, 5).map((j) => ({
-          title: j.title || "Remote Role",
-          skills: (j.tags || []).join(", "),
-          company: j.company_name || "Company",
-          region: j.candidate_required_location || "Remote",
-          applyType: "portal",
-          url: j.url || ""
+        const perRuleBatches = await Promise.all(rulesToQuery.map(async (rule) => {
+          const res = await fetch(`https://remotive.com/api/remote-jobs?search=${encodeURIComponent(rule.role)}&limit=8`);
+          if (!res.ok) throw new Error("Remotive API returned status " + res.status);
+          const data = await res.json();
+          return (data.jobs || []).slice(0, 5).map((j) => ({
+            title: j.title || "Remote Role",
+            skills: (j.tags || []).join(", "),
+            company: j.company_name || "Company",
+            region: j.candidate_required_location || "Remote",
+            applyEmail: extractHrEmail(j.description || ""),
+            applyType: extractHrEmail(j.description || "") ? "auto" : "portal",
+            url: j.url || ""
+          }));
         }));
+        return perRuleBatches.flat().slice(0, 20);
       }
       if (src === "arbeitnow") {
         const res = await fetch("https://www.arbeitnow.com/api/job-board-api");
@@ -1049,7 +1207,8 @@
           skills: (j.tags || []).join(", "),
           company: j.company_name || "Company",
           region: j.remote ? "Remote" : (j.location || "Global"),
-          applyType: "portal",
+          applyEmail: extractHrEmail(j.description || ""),
+          applyType: extractHrEmail(j.description || "") ? "auto" : "portal",
           url: j.url || ""
         }));
       }
@@ -1074,23 +1233,24 @@
       }
       const batch = [];
       const activeRules = state.rules.filter((r) => r.active);
-      if (activeRules.length > 0) {
-        const pickedRule = activeRules[state.nextJobIndex % activeRules.length];
-        const isAutoTurn = state.nextJobIndex % 2 === 0;
+      activeRules.slice(0, 5).forEach((pickedRule, idx) => {
+        const isAutoTurn = (state.nextJobIndex + idx) % 2 === 0;
         const baseSkills = (state.cvs.find((c) => c.id === pickedRule.cvId)?.skills) || "";
         const extraSkill = baseSkills.toLowerCase().includes("iso 27001") ? "GRC" : "ISO 27001, SQL";
         batch.push({
           title: pickedRule.role,
           skills: baseSkills ? `${baseSkills}, ${extraSkill}` : "SQL, Analytics, Compliance",
+          summary: `Looking for a ${pickedRule.role} experienced in ${baseSkills || "core domain skills"} to join our growing India team.`,
+          postedHoursAgo: 2 + idx,
           salaryLpa: Math.max(12, Number(state.minSalaryLpa || 0) + 2),
           expLevel: state.experienceLevel === "Any" ? "3-5" : state.experienceLevel,
-          company: isAutoTurn ? "PrimeHire India" : "GlobalVista Corp",
+          company: isAutoTurn ? `PrimeHire India (${idx + 1})` : `GlobalVista Corp (${idx + 1})`,
           region: pickedRule.region === "Any" ? "Bengaluru" : pickedRule.region,
           applyType: isAutoTurn ? "auto" : "portal",
           applyEmail: isAutoTurn ? "hr@primehire.in" : "",
           url: ""
         });
-      }
+      });
       for (let i = 0; i < 2; i++) {
         batch.push(SAMPLE_JOBS[state.nextJobIndex % SAMPLE_JOBS.length]);
         state.nextJobIndex += 1;
@@ -1098,27 +1258,75 @@
       processIncomingBatch(batch);
     }
 
+    async function extractDocxText(file) {
+      try {
+        const buf = new Uint8Array(await file.arrayBuffer());
+        const view = new DataView(buf.buffer);
+        let i = 0;
+        while (i + 30 < buf.length) {
+          if (view.getUint32(i, true) === 0x04034b50) {
+            const compMethod = view.getUint16(i + 8, true);
+            const compSize = view.getUint32(i + 18, true);
+            const nameLen = view.getUint16(i + 26, true);
+            const extraLen = view.getUint16(i + 28, true);
+            const nameStart = i + 30;
+            const fileName = new TextDecoder().decode(buf.slice(nameStart, nameStart + nameLen));
+            const dataStart = nameStart + nameLen + extraLen;
+            if (fileName === "word/document.xml" && compSize > 0 && dataStart + compSize <= buf.length) {
+              const rawEntry = buf.slice(dataStart, dataStart + compSize);
+              let xmlText = "";
+              if (compMethod === 0) {
+                xmlText = new TextDecoder().decode(rawEntry);
+              } else if (compMethod === 8 && typeof DecompressionStream !== "undefined") {
+                const ds = new DecompressionStream("deflate-raw");
+                const writer = ds.writable.getWriter();
+                writer.write(rawEntry);
+                writer.close();
+                xmlText = await new Response(ds.readable).text();
+              }
+              if (xmlText) {
+                return xmlText
+                  .replace(/<w:p[^>]*>/g, "\n")
+                  .replace(/<[^>]+>/g, " ")
+                  .replace(/&amp;/g, "&")
+                  .replace(/&lt;/g, "<")
+                  .replace(/&gt;/g, ">")
+                  .replace(/[ \t]+/g, " ")
+                  .trim();
+              }
+            }
+            i = dataStart + compSize;
+          } else {
+            i += 1;
+          }
+        }
+      } catch (e) {}
+      return "";
+    }
+
     async function extractFileText(file) {
       const lowerName = file.name.toLowerCase();
       if (lowerName.endsWith(".pdf")) {
         if (!window.pdfjsLib) return "";
         try {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
           const buf = await file.arrayBuffer();
-          const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+          const pdf = await window.pdfjsLib.getDocument({ data: buf, disableWorker: true }).promise;
           let fullText = "";
           const maxPages = Math.min(pdf.numPages, 6);
           for (let p = 1; p <= maxPages; p++) {
             const page = await pdf.getPage(p);
             const content = await page.getTextContent();
-            fullText += " " + content.items.map((it) => it.str).join(" ");
+            fullText += "\n" + content.items.map((it) => it.str).join(" ");
           }
           return fullText.trim();
         } catch (e) {
           return "";
         }
       }
-      if (lowerName.endsWith(".doc") || lowerName.endsWith(".docx")) {
+      if (lowerName.endsWith(".docx")) {
+        return await extractDocxText(file);
+      }
+      if (lowerName.endsWith(".doc")) {
         return "";
       }
       return await file.text().catch(() => "");
@@ -1154,10 +1362,13 @@
       dailyCapInput.value = String(state.maxDailyApplies || 15);
       minSalaryInput.value = String(state.minSalaryLpa || 0);
       experienceSelect.value = state.experienceLevel || "Any";
+      postedWithinSelect.value = String(state.postedWithinHours || 0);
       excludeKeywordsInput.value = state.excludeKeywords || "";
       adzunaIdInput.value = state.adzunaAppId || "";
       adzunaKeyInput.value = state.adzunaAppKey || "";
-      readGmailAlertsCheck.checked = Boolean(state.readGmailAlerts);
+      ghBoardsInput.value = state.greenhouseBoards || "ivalua, speechify, addepar1, fictiv, abacusinsights";
+      ashbyBoardsInput.value = state.ashbyCompanies || "litmus, lyric, nexus-cognitive, rearc, gen-digital";
+      readGmailAlertsCheck.checked = state.readGmailAlerts !== false;
       updateEmailHint();
 
       autoApplyToggle.className = "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent " + (state.autoApply ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-700");
@@ -1209,6 +1420,7 @@
       topLinkIndeed.href = pLinks.indeedUrl;
       topLinkFoundit.href = pLinks.founditUrl;
       topLinkWellfound.href = pLinks.wellfoundUrl;
+      topLinkGoogleJobs.href = pLinks.googleJobsUrl;
 
       if (state.rules.length === 0) {
         rulesList.innerHTML = `<div class="text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">No target roles set yet. Pick your own job role and city below to start matching.</div>`;
@@ -1226,6 +1438,7 @@
                 <a href="${links.indeedUrl}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">Indeed ↗</a>
                 <a href="${links.founditUrl}" target="_blank" rel="noopener noreferrer" class="text-violet-600 dark:text-violet-400 hover:underline font-medium">Foundit ↗</a>
                 <a href="${links.wellfoundUrl}" target="_blank" rel="noopener noreferrer" class="text-amber-600 dark:text-amber-400 hover:underline font-medium">Wellfound ↗</a>
+                <a href="${links.googleJobsUrl}" target="_blank" rel="noopener noreferrer" class="text-rose-600 dark:text-rose-400 hover:underline font-medium">Google Jobs ↗</a>
               </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">
@@ -1259,13 +1472,20 @@
               <div class="text-sm font-semibold text-slate-900 dark:text-white">${escapeHtml(item.title)}</div>
               <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.company)} · ${escapeHtml(item.region)}${item.salaryLpa ? ` · ₹${item.salaryLpa} LPA` : ""}${item.expLevel ? ` · ${escapeHtml(item.expLevel)} yrs` : ""}</div>
               <div class="text-[11px] text-indigo-600 dark:text-indigo-300 font-medium mt-1.5">Recommended CV: ${escapeHtml(item.cvName)}</div>
+              <div class="mt-2 rounded-lg bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 p-2.5 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                <div><strong>Budget:</strong> ${escapeHtml(item.salaryText || (item.salaryLpa ? `₹${item.salaryLpa} LPA` : "Not disclosed"))} · <strong>Exp:</strong> ${escapeHtml(item.expLevel ? `${item.expLevel} yrs` : "Not specified")}</div>
+                ${item.skills ? `<div><strong>Skills:</strong> ${escapeHtml(item.skills)}</div>` : ""}
+                ${item.summary ? `<div><strong>About Role:</strong> ${escapeHtml(item.summary)}</div>` : ""}
+              </div>
               ${item.missingSkills && item.missingSkills.length ? `<div class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Missing skills to highlight: ${escapeHtml(item.missingSkills.join(", "))}</div>` : ""}
               ${item.coverNote ? `<p class="whitespace-pre-line text-[11px] text-slate-600 dark:text-slate-400 mt-2 bg-white/70 dark:bg-slate-900/70 rounded-lg p-2.5 border border-slate-200/70 dark:border-slate-800 leading-relaxed">${escapeHtml(item.coverNote)}</p>` : ""}
             </div>
             <div class="flex flex-wrap gap-2">
               <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold">Open Portal ↗</a>
+              ${item.applyEmail ? `<button type="button" data-email-hr-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer">Email HR (${escapeHtml(item.applyEmail)}) ↗</button>` : ""}
               <button type="button" data-copy-portal-url="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Link</button>
               <button type="button" data-copy-portal-note="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Note</button>
+              <button type="button" data-copy-portal-cv="${item.id}" class="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-semibold cursor-pointer">Copy Tailored CV</button>
               <button type="button" data-mark-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold cursor-pointer">Mark Applied</button>
             </div>
           </div>`).join("");
@@ -1290,6 +1510,13 @@
                 <div class="text-[11px] ${daysOld >= 7 ? "text-amber-500 font-semibold" : "text-slate-400"}">${app.time} · ${followText}</div>
               </div>
             </div>
+            <div id="appliedSummary-${app.id}" class="hidden text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/70 rounded-xl p-3 border border-slate-200 dark:border-slate-800 space-y-1.5">
+              <div><strong class="text-slate-800 dark:text-slate-100">Company:</strong> ${escapeHtml(app.company)} (${escapeHtml(app.region)})</div>
+              <div><strong class="text-slate-800 dark:text-slate-100">Company Budget:</strong> ${escapeHtml(app.salaryText || (app.salaryLpa ? `₹${app.salaryLpa} LPA` : "Not disclosed"))}</div>
+              <div><strong class="text-slate-800 dark:text-slate-100">Experience Required:</strong> ${escapeHtml(app.expLevel ? `${app.expLevel} yrs` : "Not specified")}</div>
+              <div><strong class="text-slate-800 dark:text-slate-100">Skills Required:</strong> ${escapeHtml(app.skills || "See job posting")}</div>
+              ${app.summary ? `<div><strong class="text-slate-800 dark:text-slate-100">Job Details:</strong> ${escapeHtml(app.summary)}</div>` : ""}
+            </div>
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
               <select data-status-applied="${app.id}" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2 py-1 text-[11px] font-semibold text-slate-800 dark:text-slate-200">
                 <option value="Applied" ${curStatus === "Applied" ? "selected" : ""}>Applied</option>
@@ -1299,7 +1526,11 @@
                 <option value="Rejected" ${curStatus === "Rejected" ? "selected" : ""}>Rejected</option>
               </select>
               <input data-note-applied="${app.id}" type="text" value="${escapeHtml(app.notes || "")}" placeholder="Add interview date or HR notes..." class="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-1 text-[11px] text-slate-900 dark:text-white" />
+              <button type="button" data-toggle-applied-summary="${app.id}" class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer">View Summary</button>
+              ${app.url ? `<a href="${app.url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">Open Job ↗</a>` : ""}
+              ${app.applyEmail ? `<button type="button" data-email-hr-applied="${app.id}" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer">Email HR ↗</button>` : ""}
               ${app.coverNote ? `<button type="button" data-copy-applied-note="${app.id}" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold cursor-pointer">Copy Note</button>` : ""}
+              <button type="button" data-copy-applied-cv="${app.id}" class="px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer">Tailored CV</button>
             </div>
           </div>`;
         }).join("");
@@ -1427,9 +1658,11 @@
       newCvSkills.value = ""; cvFilePicker.value = "";
       persistCurrentUser(); render();
       if (!manualSkills && detected.length === 0) {
-        showToast("CV Saved (Add Skills)", `${file.name} had no readable text (e.g. scanned PDF or DOCX). Type key skills below.`, false);
+        const box = document.getElementById("editCvBox-" + state.cvs[state.cvs.length - 1].id);
+        if (box) box.classList.remove("hidden");
+        showToast("CV Saved (Add Skills)", `${file.name} (${text.length} chars read) — no matching skills found. Tap Save after typing skills.`, false);
       } else {
-        showToast("CV Uploaded ✓", `${file.name} (${sizeKb} KB) — detected ${manualSkills ? "custom" : detected.length} skill(s).`, true);
+        showToast("CV Uploaded ✓", `${file.name} (${text.length} chars read) — found ${manualSkills ? "custom" : detected.length} skill(s).`, true);
       }
     });
 
@@ -1509,6 +1742,7 @@
       state.maxDailyApplies = Math.max(1, Number(dailyCapInput.value) || 15);
       state.minSalaryLpa = Math.max(0, Number(minSalaryInput.value) || 0);
       state.experienceLevel = experienceSelect.value || "Any";
+      state.postedWithinHours = Number(postedWithinSelect.value || 0);
       state.excludeKeywords = excludeKeywordsInput.value.trim();
       persistCurrentUser(); render();
       showToast("Settings Saved ✓", `Cap: ${state.maxDailyApplies}/day · Min Salary: ${state.minSalaryLpa ? "₹" + state.minSalaryLpa + " LPA" : "Any"}`, true);
@@ -1544,6 +1778,22 @@
         if (item && item.url) copyTextSafe(item.url, "Portal link");
         return;
       }
+      const emailHrBtn = e.target.closest("[data-email-hr-portal]");
+      if (emailHrBtn) {
+        const item = state.portalQueue.find((p) => p.id === emailHrBtn.getAttribute("data-email-hr-portal"));
+        if (item && item.applyEmail) {
+          const href = buildMailtoHref(item);
+          copyTextSafe(`To: ${item.applyEmail}\n\n${item.coverNote || buildCoverNote(item)}`, `HR email (${item.applyEmail}) & cover letter`);
+          try { window.open(href, "_blank"); } catch (err) {}
+        }
+        return;
+      }
+      const copyCvBtn = e.target.closest("[data-copy-portal-cv]");
+      if (copyCvBtn) {
+        const item = state.portalQueue.find((p) => p.id === copyCvBtn.getAttribute("data-copy-portal-cv"));
+        if (item) copyTextSafe(buildTailoredCvSnippet(item), "Tailored CV summary");
+        return;
+      }
       const copyBtn = e.target.closest("[data-copy-portal-note]");
       if (copyBtn) {
         const item = state.portalQueue.find((p) => p.id === copyBtn.getAttribute("data-copy-portal-note"));
@@ -1562,6 +1812,28 @@
     });
 
     appliedList.addEventListener("click", (e) => {
+      const sumBtn = e.target.closest("[data-toggle-applied-summary]");
+      if (sumBtn) {
+        const box = document.getElementById("appliedSummary-" + sumBtn.getAttribute("data-toggle-applied-summary"));
+        if (box) box.classList.toggle("hidden");
+        return;
+      }
+      const emailHrBtn = e.target.closest("[data-email-hr-applied]");
+      if (emailHrBtn) {
+        const item = state.applied.find((a) => a.id === emailHrBtn.getAttribute("data-email-hr-applied"));
+        if (item && item.applyEmail) {
+          const href = buildMailtoHref(item);
+          copyTextSafe(`To: ${item.applyEmail}\n\n${item.coverNote || buildCoverNote(item)}`, `HR email (${item.applyEmail}) & cover letter`);
+          try { window.open(href, "_blank"); } catch (err) {}
+        }
+        return;
+      }
+      const copyCvBtn = e.target.closest("[data-copy-applied-cv]");
+      if (copyCvBtn) {
+        const item = state.applied.find((a) => a.id === copyCvBtn.getAttribute("data-copy-applied-cv"));
+        if (item) copyTextSafe(buildTailoredCvSnippet(item), "Tailored CV summary");
+        return;
+      }
       const copyBtn = e.target.closest("[data-copy-applied-note]");
       if (copyBtn) {
         const item = state.applied.find((a) => a.id === copyBtn.getAttribute("data-copy-applied-note"));
@@ -1623,6 +1895,8 @@
     saveOwnerKeysBtn.addEventListener("click", () => {
       state.adzunaAppId = adzunaIdInput.value.trim();
       state.adzunaAppKey = adzunaKeyInput.value.trim();
+      state.greenhouseBoards = ghBoardsInput.value.trim();
+      state.ashbyCompanies = ashbyBoardsInput.value.trim();
       state.readGmailAlerts = readGmailAlertsCheck.checked;
       persistCurrentUser();
       ownerModal.classList.add("hidden");
@@ -1632,6 +1906,8 @@
     downloadConfigBtn.addEventListener("click", () => {
       state.adzunaAppId = adzunaIdInput.value.trim();
       state.adzunaAppKey = adzunaKeyInput.value.trim();
+      state.greenhouseBoards = ghBoardsInput.value.trim();
+      state.ashbyCompanies = ashbyBoardsInput.value.trim();
       state.readGmailAlerts = readGmailAlertsCheck.checked;
       persistCurrentUser();
       const cfg = {
@@ -1646,11 +1922,12 @@
         max_daily_applies: state.maxDailyApplies || 15,
         min_salary_lpa: state.minSalaryLpa || 0,
         experience_level: state.experienceLevel || "Any",
+        posted_within_hours: state.postedWithinHours || 0,
         read_gmail_alerts: Boolean(state.readGmailAlerts),
         exclude_keywords: (state.excludeKeywords || "").split(",").map((x) => x.trim()).filter(Boolean),
-        greenhouse_boards: [],
+        greenhouse_boards: (state.greenhouseBoards || "").split(",").map((x) => x.trim()).filter(Boolean),
         lever_companies: [],
-        ashby_companies: [],
+        ashby_companies: (state.ashbyCompanies || "").split(",").map((x) => x.trim()).filter(Boolean),
         rules: state.rules.filter((r) => r.active).map((r) => ({
           role: r.role,
           region: r.region,
