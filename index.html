@@ -649,15 +649,22 @@
 
     let cloudSaveTimer = null;
     async function syncStateToSupabase() {
-      if (!sb || !currentUserId) return;
+      if (!sb || !currentUserId) return false;
       try {
-        await sb.from("user_workspaces").upsert({
+        const { error } = await sb.from("user_workspaces").upsert({
           user_id: currentUserId,
           email: state.notifyEmail || currentUser,
           data: state,
           updated_at: new Date().toISOString()
-        });
-      } catch (e) {}
+        }, { onConflict: "user_id" });
+        if (error) {
+          showToast("Cloud Sync Error", error.message, false);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     async function pullStateFromSupabase() {
@@ -1648,6 +1655,7 @@
             enterApp(user);
             const pulled = await pullStateFromSupabase();
             if (pulled) { persistCurrentUser(); render(); }
+            else { await syncStateToSupabase(); }
             showToast("Cloud Synced ✓", "Loaded your latest CVs, rules, and background applications.", true);
             return;
           }
@@ -1677,8 +1685,8 @@
         render();
         showToast("Cloud Synced ✓", "Refreshed latest background applications & alerts.", true);
       } else {
-        await syncStateToSupabase();
-        showToast("Cloud Saved ✓", "Your workspace is up to date in Supabase.", true);
+        const ok = await syncStateToSupabase();
+        if (ok) showToast("Cloud Saved ✓", "Your workspace is up to date in Supabase.", true);
       }
     });
 
