@@ -280,19 +280,21 @@
                   <span id="schedulerKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-x-5"></span>
                 </button>
                 <div>
-                  <div class="text-xs font-semibold text-slate-900 dark:text-white">Auto-Scan</div>
-                  <div id="countdownText" class="text-[11px] text-slate-500 dark:text-slate-400">Next scan in 59:59</div>
+                  <div class="text-xs font-semibold text-slate-900 dark:text-white">Background Auto-Scan</div>
+                  <div id="countdownText" class="text-[11px] text-slate-500 dark:text-slate-400">Active (runs every 15m in cloud)</div>
                 </div>
               </div>
-              <select id="intervalSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+              <select id="intervalSelect" class="hidden rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                <option value="900">Cloud (Every 15 Min)</option>
                 <option value="3600">Every 1 Hour</option>
                 <option value="5">Every 5 Seconds (Demo)</option>
               </select>
               <select id="feedSourceSelect" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
-                <option value="simulated">Smart India Demo Feed</option>
-                <option value="adzuna">Live India Feed (Adzuna)</option>
+                <option value="cloud">CareerRelay Live India Feed</option>
+                <option value="adzuna">Direct Adzuna Feed (Owner Keys)</option>
                 <option value="remotive">Live Global Remote (Remotive)</option>
                 <option value="arbeitnow">Live Global Feed (Arbeitnow)</option>
+                <option value="simulated">Sample Demo Feed</option>
               </select>
             </div>
             <div class="flex items-center gap-2.5">
@@ -605,8 +607,8 @@
         avatarDataUrl: "",
         autoApply: true,
         schedulerOn: true,
-        intervalSec: 3600,
-        feedSource: "simulated",
+        intervalSec: 900,
+        feedSource: isDemo ? "simulated" : "cloud",
         notifyEmail: email || "",
         emailMode: "instant",
         emailAlertsOn: true,
@@ -924,7 +926,11 @@
 
     function startScheduler() {
       if (timerHandle) clearInterval(timerHandle);
-      if (!state.schedulerOn) { countdownText.textContent = "Auto-Scan paused"; return; }
+      if (!state.schedulerOn) { countdownText.textContent = "Background scan paused"; return; }
+      if (currentUser !== "demo" && state.intervalSec !== 5) {
+        countdownText.textContent = "Cloud worker active (every 15 min)";
+        return;
+      }
       countdownText.textContent = "Next scan in " + formatTime(secondsLeft);
       timerHandle = setInterval(() => {
         if (!state.schedulerOn) return;
@@ -1182,6 +1188,28 @@
       const src = state.feedSource;
       const activeRules = state.rules.filter((r) => r.active);
       const rulesToQuery = activeRules.length ? activeRules.slice(0, 5) : [{ role: "Software Engineer", region: "India" }];
+      if (src === "cloud") {
+        if (sb) {
+          const { data, error } = await sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(50);
+          if (!error && data && data.length > 0) {
+            return data.map((j) => ({
+              title: j.title || "",
+              skills: j.skills || extractSkillsFromText(`${j.title || ""} ${j.summary || ""}`).join(", "),
+              summary: j.summary || "",
+              expLevel: j.exp_level || "",
+              salaryLpa: j.salary_lpa || 0,
+              salaryText: j.salary_text || "",
+              postedHoursAgo: j.created_at ? Math.max(1, Math.round((Date.now() - Date.parse(j.created_at)) / 3600000)) : 1,
+              company: j.company || "Company",
+              region: j.region || "India",
+              applyEmail: j.apply_email || "",
+              applyType: j.apply_email ? "auto" : "portal",
+              url: j.url || ""
+            }));
+          }
+        }
+        throw new Error("No cached cloud jobs yet — tap Run workflow in Careerelay-bot or switch to Remotive/Arbeitnow.");
+      }
       if (src === "adzuna") {
         if (!state.adzunaAppId || !state.adzunaAppKey) {
           throw new Error("Add your free Adzuna App ID & Key in Owner Setup (footer) to use Live India Feed.");
@@ -1403,7 +1431,8 @@
 
       intervalSelect.value = String(state.intervalSec);
       feedSourceSelect.value = state.feedSource;
-      feedBadge.textContent = state.feedSource === "simulated" ? "Smart India Demo" : state.feedSource.toUpperCase();
+      intervalSelect.classList.toggle("hidden", currentUser !== "demo");
+      feedBadge.textContent = state.feedSource === "cloud" ? "CareerRelay Cloud" : (state.feedSource === "simulated" ? "Demo" : state.feedSource.toUpperCase());
       notifyEmailInput.value = state.notifyEmail || "";
       emailModeSelect.value = state.emailMode || "instant";
       minMatchRange.value = String(state.minMatchScore || 75);
