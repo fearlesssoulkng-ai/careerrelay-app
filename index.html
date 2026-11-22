@@ -11,6 +11,7 @@
   <link rel="icon" type="image/png" href="icon-192.png" />
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <script>tailwind.config = { darkMode: "class" };</script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -165,8 +166,8 @@
 
       <form id="loginForm" class="space-y-3.5">
         <div>
-          <label for="loginUsername" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Username</label>
-          <input id="loginUsername" type="text" required placeholder="Enter your username" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+          <label for="loginUsername" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Email or Username</label>
+          <input id="loginUsername" type="text" required placeholder="you@gmail.com" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
         </div>
         <div>
           <label for="loginPassword" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Password</label>
@@ -186,7 +187,7 @@
         </div>
         <div>
           <label for="signupPassword" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Create Password</label>
-          <input id="signupPassword" type="password" required minlength="4" placeholder="At least 4 characters" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
+          <input id="signupPassword" type="password" required minlength="6" placeholder="At least 6 characters" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white" />
         </div>
         <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold cursor-pointer">Create Free Account</button>
       </form>
@@ -211,6 +212,7 @@
         </button>
 
         <div class="flex items-center gap-2">
+          <button id="syncCloudBtn" type="button" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer" title="Sync latest background jobs from cloud">☁️ Sync</button>
           <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
             <span>🔔</span>
             <span class="hidden sm:inline">Alerts</span>
@@ -490,6 +492,11 @@
   <script>
     const ACCOUNTS_KEY = "careerrelay_accounts_v2";
     const SESSION_KEY = "careerrelay_session_v2";
+    const SUPABASE_URL = "https://bfgtnvlmzzcndwbuxzon.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_IAJVkmoqNP9ljsQ6WwPE4A_OUiD1PCZ";
+    const sb = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
 
     const SAMPLE_JOBS = [
       { title: "Software Engineer", skills: "Python, AWS, Docker, SQL", summary: "Build scalable cloud APIs and microservices with Python, AWS, and Docker.", postedHoursAgo: 3, salaryLpa: 14, expLevel: "3-5", company: "NextWave Tech", region: "Bengaluru", applyType: "auto", applyEmail: "careers@nextwave.in", url: "" },
@@ -634,10 +641,40 @@
     }
 
     let currentUser = null;
+    let currentUserId = null;
     let state = defaultUserData("", false);
     let appliedSearchTerm = "";
     let timerHandle = null;
     let secondsLeft = 3600;
+
+    let cloudSaveTimer = null;
+    async function syncStateToSupabase() {
+      if (!sb || !currentUserId) return;
+      try {
+        await sb.from("user_workspaces").upsert({
+          user_id: currentUserId,
+          email: state.notifyEmail || currentUser,
+          data: state,
+          updated_at: new Date().toISOString()
+        });
+      } catch (e) {}
+    }
+
+    async function pullStateFromSupabase() {
+      if (!sb || !currentUserId) return false;
+      try {
+        const { data, error } = await sb
+          .from("user_workspaces")
+          .select("data")
+          .eq("user_id", currentUserId)
+          .maybeSingle();
+        if (!error && data && data.data && typeof data.data === "object") {
+          state = { ...defaultUserData(state.notifyEmail, false), ...data.data };
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
 
     function persistCurrentUser() {
       if (!currentUser) return;
@@ -645,6 +682,10 @@
       if (accounts[currentUser]) {
         accounts[currentUser].data = state;
         saveAccounts(accounts);
+      }
+      if (sb && currentUserId) {
+        if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = setTimeout(() => { syncStateToSupabase(); }, 400);
       }
     }
 
@@ -691,6 +732,7 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const themeIcon = document.getElementById("themeIcon");
+    const syncCloudBtn = document.getElementById("syncCloudBtn");
     const openNotifBtn = document.getElementById("openNotifBtn");
     const notifCountBadge = document.getElementById("notifCountBadge");
     const notifDrawer = document.getElementById("notifDrawer");
@@ -1553,11 +1595,34 @@
     authThemeBtn.addEventListener("click", () => { state.theme = state.theme === "light" ? "dark" : "light"; applyTheme(); });
     themeToggleBtn.addEventListener("click", () => { state.theme = state.theme === "light" ? "dark" : "light"; persistCurrentUser(); applyTheme(); });
 
-    signupForm.addEventListener("submit", (e) => {
+    signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const user = signupUsername.value.trim().toLowerCase();
       const email = signupEmail.value.trim();
       const pass = signupPassword.value;
+      if (sb) {
+        try {
+          const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { username: user } } });
+          if (error) { showToast("Signup Error", error.message, false); return; }
+          if (data && data.user) {
+            currentUserId = data.user.id;
+            const fresh = defaultUserData(email, false);
+            fresh.fullName = user;
+            const accounts = loadAccounts();
+            accounts[email.toLowerCase()] = { password: pass, data: fresh };
+            saveAccounts(accounts);
+            if (data.session) {
+              await sb.from("user_workspaces").upsert({ user_id: currentUserId, email, data: fresh, updated_at: new Date().toISOString() });
+              enterApp(email.toLowerCase());
+              showToast("Cloud Account Created ✓", "Your profile, CVs, and jobs now sync automatically.", true);
+            } else {
+              showToast("Confirm Your Email", "Check your inbox for the Supabase confirmation link, then log in.", true);
+              switchAuthTab("login");
+            }
+            return;
+          }
+        } catch (err) {}
+      }
       const accounts = loadAccounts();
       if (accounts[user]) { showToast("Username Taken", "Please pick another username or log in.", false); return; }
       accounts[user] = { password: pass, data: defaultUserData(email, false) };
@@ -1566,12 +1631,32 @@
       showToast("Account Created ✓", "Upload your CV and add your first target job role.", true);
     });
 
-    loginForm.addEventListener("submit", (e) => {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const user = loginUsername.value.trim().toLowerCase();
       const pass = loginPassword.value;
+      if (sb && user.includes("@")) {
+        try {
+          const { data, error } = await sb.auth.signInWithPassword({ email: user, password: pass });
+          if (!error && data && data.user) {
+            currentUserId = data.user.id;
+            const accounts = loadAccounts();
+            if (!accounts[user]) {
+              accounts[user] = { password: pass, data: defaultUserData(user, false) };
+              saveAccounts(accounts);
+            }
+            enterApp(user);
+            const pulled = await pullStateFromSupabase();
+            if (pulled) { persistCurrentUser(); render(); }
+            showToast("Cloud Synced ✓", "Loaded your latest CVs, rules, and background applications.", true);
+            return;
+          }
+          if (error) { showToast("Login Failed", error.message, false); return; }
+        } catch (err) {}
+      }
       const accounts = loadAccounts();
-      if (!accounts[user] || accounts[user].password !== pass) { showToast("Login Failed", "Check your username and password.", false); return; }
+      if (!accounts[user] || accounts[user].password !== pass) { showToast("Login Failed", "Check your email/username and password.", false); return; }
+      currentUserId = null;
       enterApp(user);
     });
 
@@ -1585,9 +1670,23 @@
       showToast("Sample Demo Active", "Signed in as @demo.", true);
     });
 
-    logoutBtn.addEventListener("click", () => {
+    syncCloudBtn.addEventListener("click", async () => {
+      if (!sb || !currentUserId) { showToast("Local Mode", "Sign in with your email account to sync with cloud.", false); return; }
+      const pulled = await pullStateFromSupabase();
+      if (pulled) {
+        render();
+        showToast("Cloud Synced ✓", "Refreshed latest background applications & alerts.", true);
+      } else {
+        await syncStateToSupabase();
+        showToast("Cloud Saved ✓", "Your workspace is up to date in Supabase.", true);
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
       if (timerHandle) clearInterval(timerHandle);
+      if (sb && currentUserId) { try { await sb.auth.signOut(); } catch (e) {} }
       currentUser = null;
+      currentUserId = null;
       try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
       appScreen.classList.add("hidden");
       authScreen.classList.remove("hidden");
@@ -1654,7 +1753,16 @@
       const manualSkills = newCvSkills.value.trim();
       const skills = manualSkills || (detected.length ? detected.join(", ") : "No selectable text found — add skills manually");
       const sizeKb = Math.max(1, Math.round(file.size / 1024));
-      state.cvs.push({ id: "cv-" + Date.now(), name: file.name, skills, uploadedSize: `${sizeKb} KB` });
+      let storagePath = "";
+      if (sb && currentUserId) {
+        try {
+          const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `${currentUserId}/${Date.now()}_${cleanName}`;
+          const { error: upErr } = await sb.storage.from("cv-files").upload(path, file, { upsert: true });
+          if (!upErr) storagePath = path;
+        } catch (upEx) {}
+      }
+      state.cvs.push({ id: "cv-" + Date.now(), name: file.name, skills, uploadedSize: `${sizeKb} KB`, storagePath });
       newCvSkills.value = ""; cvFilePicker.value = "";
       persistCurrentUser(); render();
       if (!manualSkills && detected.length === 0) {
@@ -1942,10 +2050,29 @@
       showToast("config.json Downloaded ✓", "Upload this to your careerrelay-bot repo.", true);
     });
 
-    (function init() {
+    (async function init() {
       applyTheme();
       if ("serviceWorker" in navigator && location.protocol === "https:") {
         navigator.serviceWorker.register("./sw.js").catch(() => {});
+      }
+      if (sb) {
+        try {
+          const { data } = await sb.auth.getSession();
+          if (data && data.session && data.session.user) {
+            const u = data.session.user;
+            currentUserId = u.id;
+            const em = (u.email || "").toLowerCase();
+            const accounts = loadAccounts();
+            if (!accounts[em]) {
+              accounts[em] = { password: "", data: defaultUserData(em, false) };
+              saveAccounts(accounts);
+            }
+            enterApp(em);
+            const pulled = await pullStateFromSupabase();
+            if (pulled) { render(); }
+            return;
+          }
+        } catch (e) {}
       }
       try {
         const saved = localStorage.getItem(SESSION_KEY);
