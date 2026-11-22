@@ -1918,7 +1918,8 @@
       state.rules.push({ id: "rule-" + Date.now(), role, region: ruleRegionInput.value, cvId, active: true });
       ruleRoleInput.value = "";
       persistCurrentUser(); render();
-      showToast("Role Saved ✓", `Watching ${role} in ${ruleRegionInput.value}.`, true);
+      showToast("Role Saved ✓", `Scanning jobs for ${role} in ${ruleRegionInput.value}...`, true);
+      checkForNewJobs();
     });
 
     rulesList.addEventListener("click", (e) => {
