@@ -1834,8 +1834,21 @@
     clearNotifBtn.addEventListener("click", () => { state.notifications = []; persistCurrentUser(); render(); });
 
     checkJobsBtn.addEventListener("click", () => { secondsLeft = state.intervalSec; checkForNewJobs(); });
-    schedulerToggle.addEventListener("click", () => { state.schedulerOn = !state.schedulerOn; persistCurrentUser(); render(); startScheduler(); });
-    autoApplyToggle.addEventListener("click", () => { state.autoApply = !state.autoApply; persistCurrentUser(); render(); });
+    schedulerToggle.addEventListener("click", () => {
+      state.schedulerOn = !state.schedulerOn;
+      persistCurrentUser();
+      if (sb && currentUserId) syncStateToSupabase();
+      render();
+      startScheduler();
+      showToast(state.schedulerOn ? "Background Scan ON ✓" : "Background Scan Paused ✓", state.schedulerOn ? "Cloud watcher will scan and send alerts." : "Cloud scans and email alerts are now paused.", true);
+    });
+    autoApplyToggle.addEventListener("click", () => {
+      state.autoApply = !state.autoApply;
+      persistCurrentUser();
+      if (sb && currentUserId) syncStateToSupabase();
+      render();
+      showToast(state.autoApply ? "Auto-Apply ON ✓" : "Notify Only ✓", state.autoApply ? "Will auto-email HR when listed." : "HR auto-emailing is off; matches go to Portal Queue.", true);
+    });
     intervalSelect.addEventListener("change", (e) => { state.intervalSec = Number(e.target.value); secondsLeft = state.intervalSec; persistCurrentUser(); startScheduler(); });
     feedSourceSelect.addEventListener("change", (e) => { state.feedSource = e.target.value; persistCurrentUser(); render(); });
 
