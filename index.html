@@ -1359,11 +1359,13 @@
             processIncomingBatch(liveBatch);
             return;
           }
-          feedStatusMsg.textContent = "Live feed returned 0 listings for that query—showing sample matches.";
+          feedStatusMsg.textContent = "No matching live jobs found yet for your current rules — try broadening a role title or check back after the next cloud scan.";
           feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 bg-amber-500/10 text-amber-600 dark:text-amber-300";
+          return;
         } catch (err) {
-          feedStatusMsg.textContent = err.message + " Falling back to Smart India Demo Feed.";
-          feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 bg-amber-500/10 text-amber-600 dark:text-amber-300";
+          feedStatusMsg.textContent = err.message;
+          feedStatusMsg.className = "mt-3 text-xs rounded-xl px-3 py-2 bg-rose-500/10 text-rose-600 dark:text-rose-300";
+          return;
         }
       }
       const batch = [];
