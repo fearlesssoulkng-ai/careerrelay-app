@@ -285,7 +285,7 @@
                 </div>
               </div>
               <select id="intervalSelect" class="hidden rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
-                <option value="900">Cloud (Every 15 Min)</option>
+                <option value="1800">Cloud (Every 30 Min)</option>
                 <option value="3600">Every 1 Hour</option>
                 <option value="5">Every 5 Seconds (Demo)</option>
               </select>
@@ -649,7 +649,7 @@
         avatarDataUrl: "",
         autoApply: true,
         schedulerOn: true,
-        intervalSec: 900,
+        intervalSec: 1800,
         feedSource: isDemo ? "simulated" : "cloud",
         notifyEmail: email || "",
         emailMode: "instant",
@@ -1214,8 +1214,9 @@
           url: resolvedUrl, matched: isQualifiedMatch, passedScore, matchScore, cvName, applied: false
         };
         if (isQualifiedMatch) job.coverNote = buildCoverNote(job);
+        const dupIdx = state.feed.findIndex((x) => (job.url && x.url === job.url) || (x.title === job.title && x.company === job.company));
+        if (dupIdx !== -1) state.feed.splice(dupIdx, 1);
         state.feed.unshift(job);
-        while (state.feed.length > 25) state.feed.pop();
 
         if (isQualifiedMatch) {
           state.matchedCount += 1;
@@ -1233,6 +1234,9 @@
           }
         }
       });
+      const matchedFeed = state.feed.filter((j) => j.matched);
+      const otherFeed = state.feed.filter((j) => !j.matched);
+      state.feed = [...matchedFeed.slice(0, 25), ...otherFeed.slice(0, Math.max(0, 25 - matchedFeed.length))];
       persistCurrentUser();
       render();
     }
