@@ -1119,13 +1119,16 @@
     }
 
     function queuePortalJob(job) {
-      if (!state.portalQueue.some((p) => (p.url && job.url && p.url === job.url) || (p.title.trim().toLowerCase() === job.title.trim().toLowerCase() && p.company.trim().toLowerCase() === job.company.trim().toLowerCase()))) {
+      const sameJob = (p) => (p.url && job.url && p.url === job.url) || (p.title.trim().toLowerCase() === job.title.trim().toLowerCase() && p.company.trim().toLowerCase() === job.company.trim().toLowerCase());
+      if ((state.archivedPortal || []).some(sameJob) || state.applied.some(sameJob)) return;
+      if (!state.portalQueue.some(sameJob)) {
         state.portalQueue.unshift({
           id: job.id, title: job.title, company: job.company, region: job.region,
           summary: job.summary || "", skills: job.skills || "",
           salaryLpa: job.salaryLpa || 0, salaryText: job.salaryText || "",
           expLevel: job.expLevel || "", postedHoursAgo: job.postedHoursAgo ?? null,
           missingSkills: job.missingSkills || [],
+          matchScore: job.matchScore || 0,
           cvName: job.cvName, applyEmail: job.applyEmail || "", coverNote: job.coverNote || buildCoverNote(job), url: job.url
         });
       }
@@ -1228,7 +1231,8 @@
         if (isQualifiedMatch) {
           state.matchedCount += 1;
           if (!passedScore) {
-            addNotification(`Below ${minReq}% Threshold: ${job.title}`, `${job.company} scored ${matchScore}% (skipped auto-apply).`, false);
+            queuePortalJob(job);
+            addNotification(`Below ${minReq}% Threshold: ${job.title}`, `${job.company} scored ${matchScore}% (added to Portal Queue for review).`, false);
           } else if (job.applyType === "portal") {
             queuePortalJob(job);
           } else if (state.autoApply && state.applied.length < (state.maxDailyApplies || 15)) {
@@ -1618,7 +1622,7 @@
           <div class="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/5 p-4 flex flex-col justify-between gap-3">
             <div>
               <div class="text-sm font-semibold text-slate-900 dark:text-white">${escapeHtml(item.title)}</div>
-              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.company)} · ${escapeHtml(item.region)}${item.salaryLpa ? ` · ₹${item.salaryLpa} LPA` : ""}${item.expLevel ? ` · ${escapeHtml(item.expLevel)} yrs` : ""}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.company)} · ${escapeHtml(item.region)}${item.salaryLpa ? ` · ₹${item.salaryLpa} LPA` : ""}${item.expLevel ? ` · ${escapeHtml(item.expLevel)} yrs` : ""}${item.matchScore ? ` · <span class="${item.matchScore >= (state.minMatchScore || 75) ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"} font-semibold">${item.matchScore}% Match</span>` : ""}</div>
               <div class="text-[11px] text-indigo-600 dark:text-indigo-300 font-medium mt-1.5">Recommended CV: ${escapeHtml(item.cvName)}</div>
               <div class="mt-2 rounded-lg bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800 p-2.5 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
                 <div><strong>Budget:</strong> ${escapeHtml(item.salaryText || (item.salaryLpa ? `₹${item.salaryLpa} LPA` : "Not disclosed"))} · <strong>Exp:</strong> ${escapeHtml(item.expLevel ? `${item.expLevel} yrs` : "Not specified")}</div>
