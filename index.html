@@ -467,6 +467,10 @@
             <button id="clearPortalBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">Clear</button>
           </div>
           <div id="portalQueueList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+          <details id="archivedPortalDetails" class="mt-4 pt-3 border-t border-amber-200/70 dark:border-amber-500/20">
+            <summary class="text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer select-none">Archived Portals (<span id="archivedPortalCount">0</span>) — View or Restore Later</summary>
+            <div id="archivedPortalList" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"></div>
+          </details>
         </section>
 
         <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
@@ -671,6 +675,7 @@
         rules: isDemo ? [{ id: "rule-1", role: "Product Manager", region: "Remote", cvId: "cv-1", active: true }] : [],
         feed: [],
         portalQueue: [],
+        archivedPortal: [],
         applied: [],
         notifications: [],
         nextJobIndex: 0
@@ -854,6 +859,8 @@
     const sendTestAlertBtn = document.getElementById("sendTestAlertBtn");
 
     const portalQueueList = document.getElementById("portalQueueList");
+    const archivedPortalList = document.getElementById("archivedPortalList");
+    const archivedPortalCount = document.getElementById("archivedPortalCount");
     const clearPortalBtn = document.getElementById("clearPortalBtn");
     const appliedList = document.getElementById("appliedList");
     const searchAppliedInput = document.getElementById("searchAppliedInput");
@@ -1632,6 +1639,24 @@
               <button type="button" data-copy-portal-note="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Note</button>
               <button type="button" data-copy-portal-cv="${item.id}" class="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-semibold cursor-pointer">Copy Tailored CV</button>
               <button type="button" data-mark-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold cursor-pointer">Mark Applied</button>
+              <button type="button" data-archive-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold cursor-pointer">Archive</button>
+            </div>
+          </div>`).join("");
+
+      const archivedItems = state.archivedPortal || [];
+      archivedPortalCount.textContent = String(archivedItems.length);
+      archivedPortalList.innerHTML = archivedItems.length === 0
+        ? `<div class="md:col-span-2 text-xs text-slate-400 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">No archived portal jobs.</div>`
+        : archivedItems.map((item) => `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-3.5 flex flex-col justify-between gap-2">
+            <div>
+              <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(item.title)}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.company)} · ${escapeHtml(item.region)}</div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="${item.url || "#"}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 text-xs font-semibold">Open Link ↗</a>
+              <button type="button" data-restore-portal="${item.id}" class="px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-semibold cursor-pointer">Restore</button>
+              <button type="button" data-del-archive-portal="${item.id}" class="px-2.5 py-1 rounded-lg text-rose-500 hover:bg-rose-500/10 text-xs font-semibold cursor-pointer">Delete</button>
             </div>
           </div>`).join("");
 
@@ -2042,6 +2067,20 @@
         if (item) copyTextSafe(item.coverNote || buildCoverNote(item), "Cover letter");
         return;
       }
+      const archiveBtn = e.target.closest("[data-archive-portal]");
+      if (archiveBtn) {
+        const pid = archiveBtn.getAttribute("data-archive-portal");
+        const idx = state.portalQueue.findIndex((p) => p.id === pid);
+        if (idx !== -1) {
+          const [removed] = state.portalQueue.splice(idx, 1);
+          state.archivedPortal = [removed, ...(state.archivedPortal || [])].slice(0, 100);
+          persistCurrentUser();
+          if (sb && currentUserId) syncStateToSupabase();
+          render();
+          showToast("Archived ✓", "Moved to Archived Portals — you can restore it anytime.", true);
+        }
+        return;
+      }
       const markBtn = e.target.closest("[data-mark-portal]");
       if (markBtn) {
         const idx = state.portalQueue.findIndex((p) => p.id === markBtn.getAttribute("data-mark-portal"));
@@ -2107,6 +2146,33 @@
     });
 
     searchAppliedInput.addEventListener("input", (e) => { appliedSearchTerm = e.target.value; render(); });
+
+    archivedPortalList.addEventListener("click", (e) => {
+      const resBtn = e.target.closest("[data-restore-portal]");
+      if (resBtn) {
+        const pid = resBtn.getAttribute("data-restore-portal");
+        state.archivedPortal = state.archivedPortal || [];
+        const idx = state.archivedPortal.findIndex((p) => p.id === pid);
+        if (idx !== -1) {
+          const [item] = state.archivedPortal.splice(idx, 1);
+          state.portalQueue.unshift(item);
+          persistCurrentUser();
+          if (sb && currentUserId) syncStateToSupabase();
+          render();
+          showToast("Restored ✓", "Moved back to Company Portals.", true);
+        }
+        return;
+      }
+      const delBtn = e.target.closest("[data-del-archive-portal]");
+      if (delBtn) {
+        const pid = delBtn.getAttribute("data-del-archive-portal");
+        state.archivedPortal = (state.archivedPortal || []).filter((p) => p.id !== pid);
+        persistCurrentUser();
+        if (sb && currentUserId) syncStateToSupabase();
+        render();
+      }
+    });
+
     clearPortalBtn.addEventListener("click", () => { state.portalQueue = []; persistCurrentUser(); render(); });
     clearLogBtn.addEventListener("click", () => { state.applied = []; persistCurrentUser(); render(); });
 
