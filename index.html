@@ -139,7 +139,10 @@
         </label>
       </div>
       <div class="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
-        <div class="text-xs font-bold text-slate-900 dark:text-white">Manage Users (Stop / Resume)</div>
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-xs font-bold text-slate-900 dark:text-white">Manage Users (Stop / Resume)</div>
+          <span id="ownerUsersSummary" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Loading...</span>
+        </div>
         <div class="flex gap-2">
           <input id="ctrlUserEmailInput" type="email" placeholder="user@gmail.com" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-900 dark:text-white" />
           <button id="stopUserBtn" type="button" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">Stop</button>
@@ -743,12 +746,38 @@
     async function loadOwnerUserControls() {
       if (!sb || !userControlsList) return;
       try {
-        const { data, error } = await sb.from("user_controls").select("*").order("updated_at", { ascending: false });
-        if (error) { userControlsList.innerHTML = '<div class="text-slate-400">Run user_controls SQL in Supabase to enable.</div>'; return; }
-        if (!data || !data.length) { userControlsList.innerHTML = '<div class="text-slate-400">No paused or managed users yet.</div>'; return; }
-        userControlsList.innerHTML = data.map((u) => `
+        const [{ data: ctrlData, error: ctrlErr }, { data: wsData }] = await Promise.all([
+          sb.from("user_controls").select("*").order("updated_at", { ascending: false }),
+          sb.from("user_workspaces").select("email,data")
+        ]);
+        if (ctrlErr) {
+          if (ownerUsersSummary) ownerUsersSummary.textContent = "SQL needed";
+          userControlsList.innerHTML = '<div class="text-slate-400">Run the user_controls SQL in Supabase to enable.</div>';
+          return;
+        }
+        const pausedMap = {};
+        (ctrlData || []).forEach((c) => { pausedMap[String(c.email || "").toLowerCase()] = Boolean(c.paused); });
+        const userMap = new Map();
+        (wsData || []).forEach((w) => {
+          const em = String(w.email || "").trim().toLowerCase();
+          if (!em) return;
+          const rulesCount = Array.isArray(w.data && w.data.rules) ? w.data.rules.filter((r) => r.active !== false).length : 0;
+          userMap.set(em, { email: em, paused: Boolean(pausedMap[em]), rulesCount });
+        });
+        (ctrlData || []).forEach((c) => {
+          const em = String(c.email || "").trim().toLowerCase();
+          if (em && !userMap.has(em)) userMap.set(em, { email: em, paused: Boolean(c.paused), rulesCount: null });
+        });
+        const users = Array.from(userMap.values());
+        const stoppedCount = users.filter((u) => u.paused).length;
+        if (ownerUsersSummary) ownerUsersSummary.textContent = `Total: ${users.length} (${users.length - stoppedCount} Active · ${stoppedCount} Stopped)`;
+        if (!users.length) { userControlsList.innerHTML = '<div class="text-slate-400">No users found yet.</div>'; return; }
+        userControlsList.innerHTML = users.map((u) => `
           <div class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-800 px-2.5 py-1.5">
-            <span class="truncate text-slate-700 dark:text-slate-200">${escapeHtml(u.email)}</span>
+            <div class="min-w-0">
+              <div class="truncate text-slate-700 dark:text-slate-200 font-medium">${escapeHtml(u.email)}</div>
+              ${u.rulesCount !== null ? `<div class="text-[10px] text-slate-400">${u.rulesCount} active rule(s)</div>` : ""}
+            </div>
             <div class="flex items-center gap-2 shrink-0">
               <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.paused ? "bg-rose-500/15 text-rose-600 dark:text-rose-300" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"}">${u.paused ? "Stopped" : "Active"}</span>
               <button type="button" data-toggle-user-ctrl="${escapeHtml(u.email)}" data-next-paused="${!u.paused}" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">${u.paused ? "Resume" : "Stop"}</button>
@@ -940,6 +969,7 @@
     const stopUserBtn = document.getElementById("stopUserBtn");
     const resumeUserBtn = document.getElementById("resumeUserBtn");
     const userControlsList = document.getElementById("userControlsList");
+    const ownerUsersSummary = document.getElementById("ownerUsersSummary");
     let isAccountPaused = false;
     const closeOwnerModalBtn = document.getElementById("closeOwnerModalBtn");
     const adzunaIdInput = document.getElementById("adzunaIdInput");
