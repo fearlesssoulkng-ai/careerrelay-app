@@ -138,6 +138,15 @@
           <span>Auto-read Naukri / LinkedIn / Indeed alert emails in Gmail (IMAP)</span>
         </label>
       </div>
+      <div class="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
+        <div class="text-xs font-bold text-slate-900 dark:text-white">Manage Users (Stop / Resume)</div>
+        <div class="flex gap-2">
+          <input id="ctrlUserEmailInput" type="email" placeholder="user@gmail.com" class="flex-1 min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-1.5 text-xs text-slate-900 dark:text-white" />
+          <button id="stopUserBtn" type="button" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">Stop</button>
+          <button id="resumeUserBtn" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer">Resume</button>
+        </div>
+        <div id="userControlsList" class="max-h-32 overflow-y-auto space-y-1.5 text-xs"></div>
+      </div>
       <div class="flex justify-end gap-2 pt-2">
         <button id="saveOwnerKeysBtn" type="button" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">Save Keys</button>
         <button id="downloadConfigBtn" type="button" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer">Download config.json</button>
@@ -212,7 +221,7 @@
         </button>
 
         <div class="flex items-center gap-2">
-          <button id="syncCloudBtn" type="button" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer" title="Sync latest background jobs from cloud">☁️ Sync</button>
+          <button id="syncCloudBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer" title="Sync latest background jobs from cloud">☁️ Sync</button>
           <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
             <span>🔔</span>
             <span class="hidden sm:inline">Alerts</span>
@@ -227,6 +236,9 @@
     </nav>
 
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+      <div id="pausedAccountBanner" class="hidden mb-4 rounded-2xl border border-rose-300 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-700 dark:text-rose-300">
+        Your CareerRelay account is currently paused by the admin. Contact fearless.soul.kng@gmail.com to resume access.
+      </div>
       <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div class="inline-flex bg-slate-200/70 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800">
           <button id="tabRadarBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm cursor-pointer">Job Radar</button>
@@ -716,7 +728,47 @@
       }
     }
 
+    async function checkUserPausedStatus() {
+      isAccountPaused = false;
+      if (sb && currentUser && currentUser.includes("@") && currentUser !== ADMIN_EMAIL) {
+        try {
+          const { data, error } = await sb.from("user_controls").select("paused").eq("email", currentUser.toLowerCase()).maybeSingle();
+          if (!error && data && data.paused === true) isAccountPaused = true;
+        } catch (e) {}
+      }
+      if (pausedAccountBanner) pausedAccountBanner.classList.toggle("hidden", !isAccountPaused);
+      return isAccountPaused;
+    }
+
+    async function loadOwnerUserControls() {
+      if (!sb || !userControlsList) return;
+      try {
+        const { data, error } = await sb.from("user_controls").select("*").order("updated_at", { ascending: false });
+        if (error) { userControlsList.innerHTML = '<div class="text-slate-400">Run user_controls SQL in Supabase to enable.</div>'; return; }
+        if (!data || !data.length) { userControlsList.innerHTML = '<div class="text-slate-400">No paused or managed users yet.</div>'; return; }
+        userControlsList.innerHTML = data.map((u) => `
+          <div class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-800 px-2.5 py-1.5">
+            <span class="truncate text-slate-700 dark:text-slate-200">${escapeHtml(u.email)}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.paused ? "bg-rose-500/15 text-rose-600 dark:text-rose-300" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"}">${u.paused ? "Stopped" : "Active"}</span>
+              <button type="button" data-toggle-user-ctrl="${escapeHtml(u.email)}" data-next-paused="${!u.paused}" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">${u.paused ? "Resume" : "Stop"}</button>
+            </div>
+          </div>`).join("");
+      } catch (e) {}
+    }
+
+    async function setUserPausedState(targetEmail, pausedVal) {
+      const em = String(targetEmail || "").trim().toLowerCase();
+      if (!sb || !em || !em.includes("@")) { showToast("Enter Email", "Type a valid user email first.", false); return; }
+      const { error } = await sb.from("user_controls").upsert({ email: em, paused: pausedVal, updated_at: new Date().toISOString() }, { onConflict: "email" });
+      if (error) { showToast("Control Error", error.message, false); return; }
+      showToast(pausedVal ? "User Stopped ✓" : "User Resumed ✓", `${em} is now ${pausedVal ? "stopped" : "active"}.`, true);
+      ctrlUserEmailInput.value = "";
+      loadOwnerUserControls();
+    }
+
     async function pullStateFromSupabase() {
+      await checkUserPausedStatus();
       if (!sb || !currentUserId) return false;
       try {
         const { data, error } = await sb
@@ -726,6 +778,19 @@
           .maybeSingle();
         if (!error && data && data.data && typeof data.data === "object") {
           state = { ...defaultUserData(state.notifyEmail, false), ...data.data };
+          (state.portalQueue || []).slice(0, 15).forEach((pq) => {
+            const exists = (state.feed || []).some((f) => (pq.url && f.url === pq.url) || (f.title === pq.title && f.company === pq.company));
+            if (!exists) {
+              state.feed.push({
+                id: pq.id, title: pq.title, company: pq.company, region: pq.region,
+                summary: pq.summary || "", expLevel: pq.expLevel || "",
+                applyType: "portal", applyEmail: pq.applyEmail || "",
+                url: pq.url || "", matched: true, passedScore: true,
+                matchScore: pq.matchScore || 75, cvName: pq.cvName || "", applied: false
+              });
+            }
+          });
+          state.feed = (state.feed || []).slice(0, 25);
           return true;
         }
       } catch (e) {}
@@ -870,6 +935,12 @@
     const resetDemoBtn = document.getElementById("resetDemoBtn");
     const openOwnerModalBtn = document.getElementById("openOwnerModalBtn");
     const ownerModal = document.getElementById("ownerModal");
+    const pausedAccountBanner = document.getElementById("pausedAccountBanner");
+    const ctrlUserEmailInput = document.getElementById("ctrlUserEmailInput");
+    const stopUserBtn = document.getElementById("stopUserBtn");
+    const resumeUserBtn = document.getElementById("resumeUserBtn");
+    const userControlsList = document.getElementById("userControlsList");
+    let isAccountPaused = false;
     const closeOwnerModalBtn = document.getElementById("closeOwnerModalBtn");
     const adzunaIdInput = document.getElementById("adzunaIdInput");
     const adzunaKeyInput = document.getElementById("adzunaKeyInput");
@@ -1362,6 +1433,10 @@
     }
 
     async function checkForNewJobs() {
+      if (await checkUserPausedStatus()) {
+        showToast("Account Paused", "Your account is paused by the admin.", false);
+        return;
+      }
       feedStatusMsg.classList.add("hidden");
       if (state.feedSource !== "simulated") {
         try {
@@ -1719,6 +1794,7 @@
             </div>
             <div class="text-xs font-bold text-slate-900 dark:text-white mt-1">${escapeHtml(n.title)}</div>
             <div class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">${escapeHtml(n.body)}</div>
+            ${n.url ? `<a href="${n.url}" target="_blank" rel="noopener noreferrer" class="inline-block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline mt-1">Open Job ↗</a>` : ""}
           </div>`).join("");
     }
 
@@ -2200,7 +2276,14 @@
       showToast("Data Reset ✓", "Your workspace has been cleared.", true);
     });
 
-    openOwnerModalBtn.addEventListener("click", () => ownerModal.classList.remove("hidden"));
+    openOwnerModalBtn.addEventListener("click", () => { ownerModal.classList.remove("hidden"); loadOwnerUserControls(); });
+    stopUserBtn.addEventListener("click", () => setUserPausedState(ctrlUserEmailInput.value, true));
+    resumeUserBtn.addEventListener("click", () => setUserPausedState(ctrlUserEmailInput.value, false));
+    userControlsList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-toggle-user-ctrl]");
+      if (!btn) return;
+      setUserPausedState(btn.getAttribute("data-toggle-user-ctrl"), btn.getAttribute("data-next-paused") === "true");
+    });
     closeOwnerModalBtn.addEventListener("click", () => ownerModal.classList.add("hidden"));
     ownerModal.addEventListener("click", (e) => { if (e.target === ownerModal) ownerModal.classList.add("hidden"); });
 
