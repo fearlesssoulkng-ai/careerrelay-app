@@ -213,27 +213,27 @@
   <!-- MAIN APP SCREEN -->
   <div id="appScreen" class="hidden min-h-screen flex flex-col">
     <nav class="sticky top-0 z-30 bg-white/85 dark:bg-slate-950/85 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-      <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-        <button id="openProfileDrawerBtn" type="button" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer" title="Open My Profile">
-          <img id="navAvatarImg" src="" alt="" class="hidden w-8 h-8 rounded-full object-cover border border-indigo-500" />
-          <div id="navAvatarFallback" class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow">U</div>
-          <div class="text-left">
+      <div class="max-w-5xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+        <button id="openProfileDrawerBtn" type="button" class="flex items-center gap-2 px-1.5 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer min-w-0" title="Open My Profile">
+          <img id="navAvatarImg" src="" alt="" class="hidden w-8 h-8 rounded-full object-cover border border-indigo-500 shrink-0" />
+          <div id="navAvatarFallback" class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-xs shadow shrink-0">U</div>
+          <div class="text-left min-w-0">
             <div class="text-sm font-bold text-slate-900 dark:text-white leading-none">CareerRelay</div>
-            <div id="userGreeting" class="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-0.5">☰ @user</div>
+            <div id="userGreeting" class="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-0.5 truncate max-w-[105px] sm:max-w-none">☰ @user</div>
           </div>
         </button>
 
-        <div class="flex items-center gap-2">
-          <button id="syncCloudBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer" title="Sync latest background jobs from cloud">☁️ Sync</button>
-          <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button id="syncCloudBtn" type="button" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Sync latest background jobs from cloud">☁️ <span class="hidden sm:inline">Sync</span></button>
+          <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer whitespace-nowrap">
             <span>🔔</span>
             <span class="hidden sm:inline">Alerts</span>
             <span id="notifCountBadge" class="px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold">0</span>
           </button>
-          <button id="themeToggleBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
+          <button id="themeToggleBtn" type="button" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">
             <span id="themeIcon">☀️</span>
           </button>
-          <button id="logoutBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer">Log Out</button>
+          <button id="logoutBtn" type="button" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap">Log Out</button>
         </div>
       </div>
     </nav>
@@ -255,21 +255,21 @@
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-          <div id="statScanned" class="text-2xl font-bold text-slate-900 dark:text-white">0</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jobs Scanned</div>
+        <div class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 border-t-2 border-t-slate-400 rounded-2xl p-4 shadow-sm">
+          <div id="statScanned" class="text-2xl font-extrabold text-slate-900 dark:text-white">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Jobs Scanned</div>
         </div>
-        <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-          <div id="statMatched" class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">0</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Matches Found</div>
+        <div class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 border-t-2 border-t-indigo-500 rounded-2xl p-4 shadow-sm">
+          <div id="statMatched" class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Matches Found</div>
         </div>
-        <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-          <div id="statApplied" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">0</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Auto-Applied</div>
+        <div class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 border-t-2 border-t-emerald-500 rounded-2xl p-4 shadow-sm">
+          <div id="statApplied" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Auto-Applied</div>
         </div>
-        <div class="bg-white/90 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4">
-          <div id="statPortal" class="text-2xl font-bold text-amber-600 dark:text-amber-400">0</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Portal Links Ready</div>
+        <div class="bg-white/95 dark:bg-slate-900/85 border border-amber-200 dark:border-amber-500/30 border-t-2 border-t-amber-500 rounded-2xl p-4 shadow-sm">
+          <div id="statPortal" class="text-2xl font-extrabold text-amber-600 dark:text-amber-400">0</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Portal Links Ready</div>
         </div>
       </div>
 
@@ -1742,7 +1742,7 @@
                 <div class="mt-2 space-y-1">
                   <div><strong>Budget:</strong> ${escapeHtml(item.salaryText || (item.salaryLpa ? `₹${item.salaryLpa} LPA` : "Not disclosed"))} · <strong>Exp:</strong> ${escapeHtml(item.expLevel ? `${item.expLevel} yrs` : "Not specified")}</div>
                   ${item.skills ? `<div><strong>Skills:</strong> ${escapeHtml(item.skills)}</div>` : ""}
-                  ${item.summary ? `<div><strong>About Role:</strong> ${escapeHtml(item.summary)}</div>` : ""}
+                  ${item.summary ? `<div class="whitespace-pre-line leading-relaxed pt-1 border-t border-slate-200/70 dark:border-slate-800">${escapeHtml(item.summary)}</div>` : ""}
                 </div>
               </details>
               ${item.missingSkills && item.missingSkills.length ? `<div class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Missing skills to highlight: ${escapeHtml(item.missingSkills.join(", "))}</div>` : ""}
@@ -2294,7 +2294,7 @@
       }
     });
 
-    clearPortalBtn.addEventListener("click", () => { state.portalQueue = []; persistCurrentUser(); render(); });
+    clearPortalBtn.addEventListener("click", () => { state.portalQueue = []; persistCurrentUser(); if (sb && currentUserId) syncStateToSupabase(); render(); showToast("Cleared ✓", "Company Portals list cleared.", true); });
     clearLogBtn.addEventListener("click", () => { state.applied = []; persistCurrentUser(); render(); });
 
     exportCsvBtn.addEventListener("click", () => {
