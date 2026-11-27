@@ -213,7 +213,7 @@
   <!-- MAIN APP SCREEN -->
   <div id="appScreen" class="hidden min-h-screen flex flex-col">
     <nav class="sticky top-0 z-30 bg-white/85 dark:bg-slate-950/85 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-      <div class="max-w-5xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+      <div class="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
         <button id="openProfileDrawerBtn" type="button" class="flex items-center gap-2 px-1.5 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 cursor-pointer min-w-0" title="Open My Profile">
           <img id="navAvatarImg" src="" alt="" class="hidden w-8 h-8 rounded-full object-cover border border-indigo-500 shrink-0" />
           <div id="navAvatarFallback" class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-xs shadow shrink-0">U</div>
@@ -224,6 +224,7 @@
         </button>
 
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button id="navAdminBtn" type="button" class="hidden inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Owner Setup & User Management">⚙️ <span class="hidden sm:inline">Admin</span></button>
           <button id="syncCloudBtn" type="button" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Sync latest background jobs from cloud">☁️ <span class="hidden sm:inline">Sync</span></button>
           <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer whitespace-nowrap">
             <span>🔔</span>
@@ -238,7 +239,7 @@
       </div>
     </nav>
 
-    <main class="flex-1 max-w-5xl w-full mx-auto px-4 pt-6 pb-24 sm:pb-6">
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 pt-6 pb-24 sm:pb-6">
       <div id="pausedAccountBanner" class="hidden mb-4 rounded-2xl border border-rose-300 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-700 dark:text-rose-300">
         Your CareerRelay account is currently paused by the admin. Contact fearless.soul.kng@gmail.com to resume access.
       </div>
@@ -296,7 +297,9 @@
           </div>
         </div>
 
-        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-5 space-y-6">
+        <section class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex flex-wrap items-center gap-4">
               <div class="flex items-center gap-2.5">
@@ -373,13 +376,17 @@
           </form>
         </section>
 
-        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          </div>
+          <div class="lg:col-span-7">
+        <section class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-base font-bold text-slate-900 dark:text-white">Matching Job Feed</h2>
             <span id="feedBadge" class="text-xs text-slate-500 dark:text-slate-400">Ready</span>
           </div>
           <div id="jobFeedList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
         </section>
+          </div>
+        </div>
       </div>
 
       <!-- TAB 2: MY CVS & ALERTS -->
@@ -533,7 +540,7 @@
       <button id="mobTabCvsBtn" type="button" class="flex flex-col items-center py-1 rounded-xl text-[11px] font-semibold text-slate-500 dark:text-slate-400 cursor-pointer"><span>📄</span><span>CVs &amp; Alerts</span></button>
       <button id="mobTabAppliedBtn" type="button" class="flex flex-col items-center py-1 rounded-xl text-[11px] font-semibold text-slate-500 dark:text-slate-400 cursor-pointer"><span>🚀</span><span>Portals</span></button>
     </nav>
-    <footer class="max-w-5xl w-full mx-auto px-4 py-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+    <footer class="max-w-6xl w-full mx-auto px-4 py-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
       <span>CareerRelay — Smart Multi-CV Job Matching</span>
       <div class="flex items-center gap-3">
         <button id="resetDemoBtn" type="button" class="hover:text-slate-800 dark:hover:text-white cursor-pointer">Reset My Data</button>
@@ -545,7 +552,7 @@
   <script>
     const ACCOUNTS_KEY = "careerrelay_accounts_v2";
     const SESSION_KEY = "careerrelay_session_v2";
-    const ADMIN_EMAIL = "fearless.soul.kng@gmail.com";
+    const ADMIN_EMAILS = ["fearless.soul.kng@gmail.com", "adv.nitesh7@gmail.com"];
     const SUPABASE_URL = "https://bfgtnvlmzzcndwbuxzon.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_IAJVkmoqNP9ljsQ6WwPE4A_OUiD1PCZ";
     const sb = (window.supabase && window.supabase.createClient)
@@ -764,7 +771,7 @@
 
     async function checkUserPausedStatus() {
       isAccountPaused = false;
-      if (sb && currentUser && currentUser.includes("@") && currentUser !== ADMIN_EMAIL) {
+      if (sb && currentUser && currentUser.includes("@") && !ADMIN_EMAILS.includes((currentUser || "").toLowerCase())) {
         try {
           const { data, error } = await sb.from("user_controls").select("paused").eq("email", currentUser.toLowerCase()).maybeSingle();
           if (!error && data && data.paused === true) isAccountPaused = true;
@@ -1004,6 +1011,7 @@
 
     const resetDemoBtn = document.getElementById("resetDemoBtn");
     const openOwnerModalBtn = document.getElementById("openOwnerModalBtn");
+    const navAdminBtn = document.getElementById("navAdminBtn");
     const ownerModal = document.getElementById("ownerModal");
     const pausedAccountBanner = document.getElementById("pausedAccountBanner");
     const ctrlUserEmailInput = document.getElementById("ctrlUserEmailInput");
@@ -1658,7 +1666,8 @@
       intervalSelect.value = String(state.intervalSec);
       feedSourceSelect.value = state.feedSource;
       intervalSelect.classList.toggle("hidden", currentUser !== "demo");
-      const isAdmin = (currentUser || "").toLowerCase() === ADMIN_EMAIL || (state.notifyEmail || "").toLowerCase() === ADMIN_EMAIL;
+      const isAdmin = ADMIN_EMAILS.includes((currentUser || "").toLowerCase()) || ADMIN_EMAILS.includes((state.notifyEmail || "").toLowerCase());
+      if (navAdminBtn) navAdminBtn.classList.toggle("hidden", !isAdmin);
       openOwnerModalBtn.classList.toggle("hidden", !isAdmin);
       feedBadge.textContent = state.feedSource === "cloud" ? "CareerRelay Cloud" : (state.feedSource === "simulated" ? "Demo" : state.feedSource.toUpperCase());
       notifyEmailInput.value = state.notifyEmail || "";
@@ -1833,8 +1842,6 @@
             <div class="flex flex-wrap gap-2">
               <button type="button" data-copy-open-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold cursor-pointer">Copy Note &amp; Open ↗</button>
               <a href="https://www.google.com/search?q=${encodeURIComponent('"' + item.company + '" ("HR" OR "Recruiter" OR "Talent Acquisition") site:linkedin.com/in')}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-700 dark:text-sky-300 text-xs font-semibold">Find HR ↗</a>
-              <button type="button" data-copy-portal-url="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Link</button>
-              <button type="button" data-copy-portal-note="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold cursor-pointer">Copy Note</button>
               <button type="button" data-copy-portal-cv="${item.id}" class="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-semibold cursor-pointer">Copy Tailored CV</button>
               <button type="button" data-mark-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold cursor-pointer">Mark Applied</button>
               <button type="button" data-archive-portal="${item.id}" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold cursor-pointer">Archive</button>
@@ -2286,7 +2293,7 @@
       const copyCvBtn = e.target.closest("[data-copy-portal-cv]");
       if (copyCvBtn) {
         const item = state.portalQueue.find((p) => p.id === copyCvBtn.getAttribute("data-copy-portal-cv"));
-        if (item) copyTextSafe(buildTailoredCvSnippet(item), "Tailored CV summary");
+        if (item) copyTextSafe(item.tailoredCvText || buildTailoredCvSnippet(item), item.tailoredCvText ? "AI Tailored CV bullets" : "Tailored CV summary");
         return;
       }
       const copyBtn = e.target.closest("[data-copy-portal-note]");
@@ -2425,6 +2432,7 @@
     });
 
     openOwnerModalBtn.addEventListener("click", () => { ownerModal.classList.remove("hidden"); loadOwnerUserControls(); });
+    if (navAdminBtn) navAdminBtn.addEventListener("click", () => { ownerModal.classList.remove("hidden"); loadOwnerUserControls(); });
     stopUserBtn.addEventListener("click", () => setUserPausedState(ctrlUserEmailInput.value, true));
     resumeUserBtn.addEventListener("click", () => setUserPausedState(ctrlUserEmailInput.value, false));
     userControlsList.addEventListener("click", (e) => {
