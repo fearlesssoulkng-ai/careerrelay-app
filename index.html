@@ -375,6 +375,15 @@
 
       <!-- TAB 2: MY CVS & ALERTS -->
       <div id="panelCvs" class="hidden space-y-6">
+        <section class="bg-white/95 dark:bg-slate-900/85 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Skill-Gap Insights</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Most requested skills across your matched jobs that aren't on your CV yet.</p>
+            </div>
+          </div>
+          <div id="skillGapList" class="flex flex-wrap gap-2 mt-3"></div>
+        </section>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
             <h2 class="text-base font-bold text-slate-900 dark:text-white mb-1">My CVs</h2>
@@ -933,6 +942,7 @@
     const cvFilePicker = document.getElementById("cvFilePicker");
     const uploadCvBtn = document.getElementById("uploadCvBtn");
     const cvList = document.getElementById("cvList");
+    const skillGapList = document.getElementById("skillGapList");
     const addCvForm = document.getElementById("addCvForm");
     const newCvName = document.getElementById("newCvName");
     const newCvSkills = document.getElementById("newCvSkills");
@@ -1399,7 +1409,7 @@
             const hrs = j.created ? Math.max(1, Math.round((Date.now() - Date.parse(j.created)) / 3600000)) : null;
             const cleanDesc = j.description ? j.description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
             const extracted = extractSkillsFromText(`${j.title || ""} ${cleanDesc}`).join(", ");
-            const expMatch = cleanDesc.match(/(\d+\s*(?:-|to|–)\s*\d+|\d+\s*\+)\s*(?:years?|yrs?)/i);
+            const expMatch = `${j.title || ""} ${cleanDesc}`.match(/(\d+\s*(?:-|to|–)\s*\d+|\d+\s*\+)\s*(?:years?|yrs?)/i) || (j.title || "").match(/(?:\|\||\(|experience[:\s]+)\s*(\d+\s*(?:-|to|–)\s*\d+)\s*(?:\|\||\)|$)/i);
             const expLevel = expMatch ? expMatch[1].replace(/\s*to\s*/i, "-").replace(/\s+/g, "") : "";
             const minLpa = j.salary_min && j.salary_min > 100000 ? Math.round(j.salary_min / 100000) : 0;
             const maxLpa = j.salary_max && j.salary_max > 100000 ? Math.round(j.salary_max / 100000) : 0;
@@ -1642,6 +1652,20 @@
       statApplied.textContent = state.applied.length;
       statPortal.textContent = state.portalQueue.length;
       notifCountBadge.textContent = state.notifications.length;
+
+      if (skillGapList) {
+        const gapCounts = {};
+        [...(state.feed || []), ...(state.portalQueue || [])].forEach((j) => {
+          (j.missingSkills || []).forEach((sk) => {
+            const k = String(sk || "").trim();
+            if (k) gapCounts[k] = (gapCounts[k] || 0) + 1;
+          });
+        });
+        const topGaps = Object.entries(gapCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        skillGapList.innerHTML = topGaps.length === 0
+          ? `<span class="text-xs text-slate-500">Scan or sync more jobs to uncover skill gaps across your target roles.</span>`
+          : topGaps.map(([sk, cnt]) => `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold">${escapeHtml(sk)} <span class="text-[10px] opacity-75">(${cnt} job${cnt > 1 ? "s" : ""})</span></span>`).join("");
+      }
 
       if (state.cvs.length === 0) {
         cvList.innerHTML = `<div class="text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-800">No CV uploaded yet. Upload your CV above to start matching.</div>`;
