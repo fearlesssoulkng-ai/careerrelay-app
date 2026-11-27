@@ -85,6 +85,7 @@
         </form>
       </div>
       <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button id="drawerAdminBtn" type="button" class="hidden w-full mb-2 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-xs font-semibold cursor-pointer">⚙️ Owner Setup &amp; Users</button>
         <button id="drawerLogoutBtn" type="button" class="w-full py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold cursor-pointer">Log Out</button>
       </div>
     </div>
@@ -224,7 +225,7 @@
         </button>
 
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button id="navAdminBtn" type="button" class="hidden inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Owner Setup & User Management">⚙️ <span class="hidden sm:inline">Admin</span></button>
+          <button id="navAdminBtn" type="button" class="hidden items-center gap-1 px-2.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Owner Setup & User Management">⚙️ <span class="hidden sm:inline">Admin</span></button>
           <button id="syncCloudBtn" type="button" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Sync latest background jobs from cloud">☁️ <span class="hidden sm:inline">Sync</span></button>
           <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer whitespace-nowrap">
             <span>🔔</span>
@@ -381,7 +382,7 @@
         <section class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-base font-bold text-slate-900 dark:text-white">Matching Job Feed</h2>
-            <span id="feedBadge" class="text-xs text-slate-500 dark:text-slate-400">Ready</span>
+            <div class="flex items-center gap-3"><span id="feedBadge" class="text-xs text-slate-500 dark:text-slate-400">Ready</span><button id="clearFeedBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">Clear</button></div>
           </div>
           <div id="jobFeedList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
         </section>
@@ -1004,6 +1005,7 @@
     const archivedPortalList = document.getElementById("archivedPortalList");
     const archivedPortalCount = document.getElementById("archivedPortalCount");
     const clearPortalBtn = document.getElementById("clearPortalBtn");
+    const clearFeedBtn = document.getElementById("clearFeedBtn");
     const appliedList = document.getElementById("appliedList");
     const searchAppliedInput = document.getElementById("searchAppliedInput");
     const exportCsvBtn = document.getElementById("exportCsvBtn");
@@ -1012,6 +1014,7 @@
     const resetDemoBtn = document.getElementById("resetDemoBtn");
     const openOwnerModalBtn = document.getElementById("openOwnerModalBtn");
     const navAdminBtn = document.getElementById("navAdminBtn");
+    const drawerAdminBtn = document.getElementById("drawerAdminBtn");
     const ownerModal = document.getElementById("ownerModal");
     const pausedAccountBanner = document.getElementById("pausedAccountBanner");
     const ctrlUserEmailInput = document.getElementById("ctrlUserEmailInput");
@@ -1667,7 +1670,8 @@
       feedSourceSelect.value = state.feedSource;
       intervalSelect.classList.toggle("hidden", currentUser !== "demo");
       const isAdmin = ADMIN_EMAILS.includes((currentUser || "").toLowerCase()) || ADMIN_EMAILS.includes((state.notifyEmail || "").toLowerCase());
-      if (navAdminBtn) navAdminBtn.classList.toggle("hidden", !isAdmin);
+      if (navAdminBtn) { navAdminBtn.classList.toggle("hidden", !isAdmin); navAdminBtn.classList.toggle("sm:inline-flex", isAdmin); }
+      if (drawerAdminBtn) drawerAdminBtn.classList.toggle("hidden", !isAdmin);
       openOwnerModalBtn.classList.toggle("hidden", !isAdmin);
       feedBadge.textContent = state.feedSource === "cloud" ? "CareerRelay Cloud" : (state.feedSource === "simulated" ? "Demo" : state.feedSource.toUpperCase());
       notifyEmailInput.value = state.notifyEmail || "";
@@ -2085,6 +2089,7 @@
       });
       render();
     });
+    if (clearFeedBtn) clearFeedBtn.addEventListener("click", () => { state.feed = []; persistCurrentUser(); if (sb && currentUserId) syncStateToSupabase(); render(); showToast("Feed Cleared ✓", "Matching Job Feed cleared.", true); });
     if (searchPortalInput) searchPortalInput.addEventListener("input", (e) => { portalSearchTerm = e.target.value; render(); });
 
     openNotifBtn.addEventListener("click", () => notifDrawer.classList.remove("hidden"));
@@ -2309,6 +2314,7 @@
         if (idx !== -1) {
           const [removed] = state.portalQueue.splice(idx, 1);
           state.archivedPortal = [removed, ...(state.archivedPortal || [])].slice(0, 100);
+          state.feed = (state.feed || []).filter((f) => !(removed.url && f.url === removed.url) && !(f.title === removed.title && f.company === removed.company));
           persistCurrentUser();
           if (sb && currentUserId) syncStateToSupabase();
           render();
@@ -2408,7 +2414,16 @@
       }
     });
 
-    clearPortalBtn.addEventListener("click", () => { state.portalQueue = []; persistCurrentUser(); if (sb && currentUserId) syncStateToSupabase(); render(); showToast("Cleared ✓", "Company Portals list cleared.", true); });
+    clearPortalBtn.addEventListener("click", () => {
+      const removedUrls = new Set((state.portalQueue || []).map((p) => p.url).filter(Boolean));
+      const removedKeys = new Set((state.portalQueue || []).map((p) => `${(p.title || "").toLowerCase()}|${(p.company || "").toLowerCase()}`));
+      state.portalQueue = [];
+      state.feed = (state.feed || []).filter((f) => !(f.url && removedUrls.has(f.url)) && !removedKeys.has(`${(f.title || "").toLowerCase()}|${(f.company || "").toLowerCase()}`));
+      persistCurrentUser();
+      if (sb && currentUserId) syncStateToSupabase();
+      render();
+      showToast("Cleared ✓", "Cleared Company Portals & synced Feed.", true);
+    });
     clearLogBtn.addEventListener("click", () => { state.applied = []; persistCurrentUser(); render(); });
 
     exportCsvBtn.addEventListener("click", () => {
@@ -2433,6 +2448,7 @@
 
     openOwnerModalBtn.addEventListener("click", () => { ownerModal.classList.remove("hidden"); loadOwnerUserControls(); });
     if (navAdminBtn) navAdminBtn.addEventListener("click", () => { ownerModal.classList.remove("hidden"); loadOwnerUserControls(); });
+    if (drawerAdminBtn) drawerAdminBtn.addEventListener("click", () => { profileDrawer.classList.add("hidden"); ownerModal.classList.remove("hidden"); loadOwnerUserControls(); });
     stopUserBtn.addEventListener("click", () => setUserPausedState(ctrlUserEmailInput.value, true));
     resumeUserBtn.addEventListener("click", () => setUserPausedState(ctrlUserEmailInput.value, false));
     userControlsList.addEventListener("click", (e) => {
