@@ -225,7 +225,7 @@
         </button>
 
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button id="navAdminBtn" type="button" class="hidden items-center gap-1 px-2.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Owner Setup & User Management">⚙️ <span class="hidden sm:inline">Admin</span></button>
+          <button id="navAdminBtn" type="button" class="hidden sm:hidden items-center gap-1 px-2.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Owner Setup & User Management">⚙️ <span class="hidden sm:inline">Admin</span></button>
           <button id="syncCloudBtn" type="button" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer whitespace-nowrap" title="Sync latest background jobs from cloud">☁️ <span class="hidden sm:inline">Sync</span></button>
           <button id="openNotifBtn" type="button" class="relative inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold cursor-pointer whitespace-nowrap">
             <span>🔔</span>
@@ -481,6 +481,10 @@
                 <option value="72">Last 3 Days</option>
               </select>
             </div>
+            <label class="flex items-center justify-between gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer pt-1">
+              <span>Auto-Apply only in Business Hours (Mon–Sat, 9 AM–6:30 PM IST)</span>
+              <input id="bizHoursCheck" type="checkbox" class="rounded accent-indigo-600 w-4 h-4" />
+            </label>
             <div>
               <label for="excludeKeywordsInput" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Skip Titles With Words</label>
               <input id="excludeKeywordsInput" type="text" placeholder="intern, internship, unpaid" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white" />
@@ -712,6 +716,7 @@
         notifyEmail: email || "",
         emailMode: "instant",
         emailAlertsOn: true,
+        businessHoursOnly: true,
         excludeKeywords: "intern, internship, unpaid",
         minMatchScore: 75,
         maxDailyApplies: 15,
@@ -990,6 +995,7 @@
     const experienceSelect = document.getElementById("experienceSelect");
     const postedWithinSelect = document.getElementById("postedWithinSelect");
     const excludeKeywordsInput = document.getElementById("excludeKeywordsInput");
+    const bizHoursCheck = document.getElementById("bizHoursCheck");
     const saveAlertPrefsBtn = document.getElementById("saveAlertPrefsBtn");
     const sendTestAlertBtn = document.getElementById("sendTestAlertBtn");
 
@@ -1678,7 +1684,7 @@
       feedSourceSelect.value = state.feedSource;
       intervalSelect.classList.toggle("hidden", currentUser !== "demo");
       const isAdmin = ADMIN_EMAILS.includes((currentUser || "").toLowerCase()) || ADMIN_EMAILS.includes((state.notifyEmail || "").toLowerCase());
-      if (navAdminBtn) { navAdminBtn.classList.toggle("hidden", !isAdmin); navAdminBtn.classList.toggle("sm:inline-flex", isAdmin); }
+      if (navAdminBtn) { navAdminBtn.classList.toggle("sm:hidden", !isAdmin); navAdminBtn.classList.toggle("sm:inline-flex", isAdmin); }
       if (drawerAdminBtn) drawerAdminBtn.classList.toggle("hidden", !isAdmin);
       openOwnerModalBtn.classList.toggle("hidden", !isAdmin);
       feedBadge.textContent = state.feedSource === "cloud" ? "CareerRelay Cloud" : (state.feedSource === "simulated" ? "Demo" : state.feedSource.toUpperCase());
@@ -1691,6 +1697,7 @@
       experienceSelect.value = state.experienceLevel || "Any";
       postedWithinSelect.value = String(state.postedWithinHours || 0);
       excludeKeywordsInput.value = state.excludeKeywords || "";
+      if (bizHoursCheck) bizHoursCheck.checked = state.businessHoursOnly !== false;
       adzunaIdInput.value = state.adzunaAppId || "";
       adzunaKeyInput.value = state.adzunaAppKey || "";
       ghBoardsInput.value = state.greenhouseBoards || "ivalua, speechify, addepar1, fictiv, abacusinsights";
@@ -2234,6 +2241,7 @@
       state.experienceLevel = experienceSelect.value || "Any";
       state.postedWithinHours = Number(postedWithinSelect.value || 0);
       state.excludeKeywords = excludeKeywordsInput.value.trim();
+      if (bizHoursCheck) state.businessHoursOnly = bizHoursCheck.checked;
       persistCurrentUser(); render();
       showToast("Settings Saved ✓", `Cap: ${state.maxDailyApplies}/day · Min Salary: ${state.minSalaryLpa ? "₹" + state.minSalaryLpa + " LPA" : "Any"}`, true);
     });
