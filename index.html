@@ -526,7 +526,17 @@
           </details>
         </section>
 
-        <section class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+        <section id="pendingAutoApplySection" class="hidden bg-white/95 dark:bg-slate-900/85 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Queued for Business Hours (<span id="pendingAutoApplyCount">0</span>)</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Waiting to auto-apply between 9:00 AM – 6:30 PM IST (Mon–Sat).</p>
+            </div>
+          </div>
+          <div id="pendingAutoApplyList" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"></div>
+        </section>
+
+        <section class="bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h2 class="text-base font-bold text-slate-900 dark:text-white">Applied Jobs History</h2>
             <div class="flex items-center gap-3">
@@ -534,6 +544,7 @@
               <button id="clearLogBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer">Clear</button>
             </div>
           </div>
+          <div id="appliedStatusSummary" class="flex flex-wrap gap-1.5 mb-3"></div>
           <input id="searchAppliedInput" type="text" placeholder="Search applied jobs..." class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white mb-3" />
           <div id="appliedList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
         </section>
@@ -734,6 +745,7 @@
         rules: isDemo ? [{ id: "rule-1", role: "Product Manager", region: "Remote", cvId: "cv-1", active: true }] : [],
         feed: [],
         portalQueue: [],
+        pendingAutoApply: [],
         archivedPortal: [],
         clearedKeys: [],
         applied: [],
@@ -1014,6 +1026,10 @@
     const clearPortalBtn = document.getElementById("clearPortalBtn");
     const clearFeedBtn = document.getElementById("clearFeedBtn");
     const appliedList = document.getElementById("appliedList");
+    const appliedStatusSummary = document.getElementById("appliedStatusSummary");
+    const pendingAutoApplySection = document.getElementById("pendingAutoApplySection");
+    const pendingAutoApplyCount = document.getElementById("pendingAutoApplyCount");
+    const pendingAutoApplyList = document.getElementById("pendingAutoApplyList");
     const searchAppliedInput = document.getElementById("searchAppliedInput");
     const exportCsvBtn = document.getElementById("exportCsvBtn");
     const clearLogBtn = document.getElementById("clearLogBtn");
@@ -1884,6 +1900,32 @@
             </div>
           </div>`).join("");
 
+      const pendingItems = state.pendingAutoApply || [];
+      if (pendingAutoApplySection && pendingAutoApplyCount && pendingAutoApplyList) {
+        pendingAutoApplySection.classList.toggle("hidden", pendingItems.length === 0);
+        pendingAutoApplyCount.textContent = String(pendingItems.length);
+        pendingAutoApplyList.innerHTML = pendingItems.map((pj) => `
+          <div class="rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-500/5 p-3.5 flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900 dark:text-white truncate">${escapeHtml(pj.title)}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(pj.company)} · ${escapeHtml(pj.region)}${pj.matchScore ? ` · ${pj.matchScore}% Match` : ""}</div>
+              <div class="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1">${pj.hr_email ? `Will email ${escapeHtml(pj.hr_email)}` : "Will submit via ATS Form"}</div>
+            </div>
+            <button type="button" data-cancel-pending="${escapeHtml(pj.id)}" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-rose-500 cursor-pointer shrink-0">Cancel</button>
+          </div>`).join("");
+      }
+
+      if (appliedStatusSummary) {
+        const counts = { Applied: 0, Shortlisted: 0, Interview: 0, Offer: 0, Rejected: 0 };
+        (state.applied || []).forEach((a) => { const st = a.status || "Applied"; counts[st] = (counts[st] || 0) + 1; });
+        appliedStatusSummary.innerHTML = [
+          ["Applied", "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"],
+          ["Shortlisted", "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300"],
+          ["Interview", "bg-amber-500/15 text-amber-700 dark:text-amber-300"],
+          ["Offer", "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"],
+        ].map(([k, cls]) => `<span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold ${cls}">${k}: ${counts[k] || 0}</span>`).join("");
+      }
+
       const filtered = state.applied.filter((a) => !appliedSearchTerm || `${a.title} ${a.company} ${a.cvName}`.toLowerCase().includes(appliedSearchTerm.toLowerCase()));
       appliedList.innerHTML = filtered.length === 0
         ? `<div class="md:col-span-2 text-xs text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-5 text-center border border-dashed border-slate-200 dark:border-slate-800">No applications logged yet.</div>`
@@ -2441,6 +2483,17 @@
       render();
       showToast("Cleared ✓", "Cleared Company Portals & synced Feed.", true);
     });
+    if (pendingAutoApplyList) pendingAutoApplyList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-cancel-pending]");
+      if (!btn) return;
+      const pid = btn.getAttribute("data-cancel-pending");
+      state.pendingAutoApply = (state.pendingAutoApply || []).filter((x) => x.id !== pid);
+      persistCurrentUser();
+      if (sb && currentUserId) syncStateToSupabase();
+      render();
+      showToast("Cancelled ✓", "Removed from Business Hours queue.", true);
+    });
+
     clearLogBtn.addEventListener("click", () => { state.applied = []; persistCurrentUser(); render(); });
 
     exportCsvBtn.addEventListener("click", () => {
