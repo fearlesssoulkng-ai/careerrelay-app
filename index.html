@@ -730,6 +730,7 @@
         feed: [],
         portalQueue: [],
         archivedPortal: [],
+        clearedKeys: [],
         applied: [],
         notifications: [],
         nextJobIndex: 0
@@ -1436,7 +1437,14 @@
               applyType: j.apply_email ? "auto" : "portal",
               url: j.url || ""
             }));
-            return mapped.filter((item) => Boolean(findMatchingRule(item)));
+            const clearedSet = new Set(state.clearedKeys || []);
+            return mapped.filter((item) => {
+              const tl = (item.title || "").toLowerCase();
+              if (/^\d+\+?\s+/.test(tl) || tl.includes("jobs in ") || tl.includes("job vacancies") || tl.includes("open roles")) return false;
+              const k = `${tl}|${(item.company || "").toLowerCase()}`;
+              if ((item.url && clearedSet.has(item.url)) || clearedSet.has(k)) return false;
+              return Boolean(findMatchingRule(item));
+            });
           }
         }
         throw new Error("No cached cloud jobs yet — tap Run workflow in Careerelay-bot or switch to Remotive/Arbeitnow.");
@@ -2417,6 +2425,7 @@
     clearPortalBtn.addEventListener("click", () => {
       const removedUrls = new Set((state.portalQueue || []).map((p) => p.url).filter(Boolean));
       const removedKeys = new Set((state.portalQueue || []).map((p) => `${(p.title || "").toLowerCase()}|${(p.company || "").toLowerCase()}`));
+      state.clearedKeys = [...new Set([...(state.clearedKeys || []), ...removedUrls, ...removedKeys])].slice(-400);
       state.portalQueue = [];
       state.feed = (state.feed || []).filter((f) => !(f.url && removedUrls.has(f.url)) && !removedKeys.has(`${(f.title || "").toLowerCase()}|${(f.company || "").toLowerCase()}`));
       persistCurrentUser();
